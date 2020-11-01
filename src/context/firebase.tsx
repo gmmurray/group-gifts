@@ -15,6 +15,8 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
+export const db = firebase.firestore();
+
 type TrackingProviderProps = {
     children: React.ReactNode;
 };
