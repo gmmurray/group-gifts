@@ -7,6 +7,9 @@ export class Group {
     public code: string;
     public isPublic: boolean;
     public gifts: Array<Gift>;
+    public invitedUsers: Array<string>;
+    public description: string;
+    public ownerId: string;
 
     constructor(props: undefined | IGroup) {
         if (props !== undefined) {
@@ -16,6 +19,9 @@ export class Group {
             this.code = props.code;
             this.isPublic = props.isPublic;
             this.gifts = props.gifts;
+            this.invitedUsers = props.invitedUsers;
+            this.description = props.description;
+            this.ownerId = props.ownerId;
         } else {
             this.id = '';
             this.name = '';
@@ -23,6 +29,9 @@ export class Group {
             this.code = '';
             this.isPublic = false;
             this.gifts = new Array<Gift>();
+            this.invitedUsers = new Array<string>();
+            this.description = '';
+            this.ownerId = '';
         }
     }
 }
@@ -34,4 +43,7 @@ export interface IGroup {
     participants: Array<Participant>;
     code: string;
     isPublic: boolean;
+    invitedUsers: Array<string>;
+    description: string;
+    ownerId: string;
 }

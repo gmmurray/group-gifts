@@ -15,7 +15,7 @@ export const addParticipantToGroup = async (
         .set(
             new Participant({
                 userId: user.uid,
-                identifier: user?.email ?? '',
+                identifier: user.displayName ?? user.email ?? '',
             }),
         );
 };
@@ -28,6 +28,13 @@ export const getParticipants = async (groupId: string) => {
     snapshot.forEach(p => retrievedParticipants.push(p.data()));
 
     return retrievedParticipants;
+};
+
+export const deleteParticipantFromGroup = async (
+    groupId: string,
+    userId: string,
+) => {
+    await participantContext(groupId).doc(userId).delete();
 };
 
 export const participantConverter = {

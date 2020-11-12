@@ -1,20 +1,33 @@
-import React, { createContext, ReactNode, useContext } from 'react';
+import React, {
+    createContext,
+    ReactNode,
+    useContext,
+    useEffect,
+    useState,
+} from 'react';
 import { useFirebase } from './firebase';
 
 type doLoginType = (email: string, password: string) => Promise<void>;
 type doRegisterType = (email: string, password: string) => Promise<void>;
-type doGoogleLoginOrRegisterType = () => Promise<void>;
+type doGoogleLoginOrRegisterType = (create: boolean) => Promise<void>;
 type doLogoutType = () => Promise<void>;
+
+type updateType = {
+    displayName: string | undefined;
+    photoURL: string | undefined;
+};
+type doProfileUpdateType = (updates: updateType) => Promise<void>;
 
 type AuthenticationContextState = {
     isLogged: boolean;
     isFetchingUser: boolean;
+    hasAccess: boolean;
     user: firebase.User | null;
-
     doLogin: doLoginType;
     doRegister: doRegisterType;
     doGoogleLoginOrRegister: doGoogleLoginOrRegisterType;
     doLogout: doLogoutType;
+    doProfileUpdate: doProfileUpdateType;
 };
 
 const AuthenticationContext = createContext<
@@ -31,17 +44,16 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
         doUserLoginOnFirebase,
         logoutUserFromFirebase,
         createOrLoginThroughGoogle,
+        hasAccess,
         user,
         isFetchingUser,
     } = useFirebase();
-
     const getLoggedUser = () => user;
 
     const doLogin: doLoginType = (email, password) =>
         new Promise(async (resolve, reject) => {
             try {
                 await doUserLoginOnFirebase(email, password);
-
                 resolve();
             } catch (e) {
                 reject(e);
@@ -52,7 +64,6 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
         new Promise(async (resolve, reject) => {
             try {
                 await createUserOnFirebase(email, password);
-
                 resolve();
             } catch (e) {
                 reject(e);
@@ -61,11 +72,28 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
 
     const doLogout: doLogoutType = async () => await logoutUserFromFirebase();
 
-    const doGoogleLoginOrRegister: doGoogleLoginOrRegisterType = () =>
+    const doGoogleLoginOrRegister: doGoogleLoginOrRegisterType = create =>
         new Promise(async (resolve, reject) => {
             try {
-                await createOrLoginThroughGoogle();
+                await createOrLoginThroughGoogle(create);
                 resolve();
+            } catch (err) {
+                reject(err);
+            }
+        });
+
+    const doProfileUpdate: doProfileUpdateType = updates =>
+        new Promise(async (resolve, reject) => {
+            try {
+                const user = getLoggedUser();
+                if (user !== null) {
+                    await user.updateProfile({
+                        ...updates,
+                    });
+                    resolve();
+                } else {
+                    throw Error('User does not exist');
+                }
             } catch (err) {
                 reject(err);
             }
@@ -80,6 +108,8 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
                 doRegister,
                 doGoogleLoginOrRegister,
                 doLogout,
+                doProfileUpdate,
+                hasAccess,
             }}
         >
             {children}

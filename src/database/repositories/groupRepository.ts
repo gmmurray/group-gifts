@@ -3,8 +3,11 @@ import { Gift } from '../../models/gift';
 import { Group, IGroup } from '../../models/group';
 import { Participant } from '../../models/participant';
 import { fireDb } from '../db';
-import { getGifts } from './giftRepository';
-import { getParticipants } from './participantRepository';
+import { deleteGiftFromGroup, getGifts, getUserGifts } from './giftRepository';
+import {
+    getParticipants,
+    deleteParticipantFromGroup,
+} from './participantRepository';
 
 export const groupContext = fireDb.collection('groups');
 
@@ -83,13 +86,52 @@ export const getFullGroup = async (groupId: string) => {
 };
 
 export const createEmptyGroup = async (group: {
+    ownerId: string;
     name: string;
     code: string;
     isPublic: boolean;
+    description: string;
+    invitedUsers: Array<string>;
 }) => {
     const ref = groupContext.doc();
     await ref.set({ ...group });
     return ref.id;
+};
+
+export const removeUserFromGroup = async (groupId: string, userId: string) => {
+    await deleteParticipantFromGroup(groupId, userId);
+    const giftsToDelete = await getUserGifts(groupId, userId);
+    if (giftsToDelete.length > 0) {
+        const result = giftsToDelete.map(
+            async ({ id }) => await deleteGiftFromGroup(groupId, id),
+        );
+        await Promise.all(result);
+    }
+};
+
+export const deleteGroup = async (groupId: string) => {
+    const tasks = new Array<Promise<void>>();
+
+    const groupTask = groupContext.doc(groupId).delete();
+
+    const participantsToDelete = await getParticipants(groupId);
+    if (participantsToDelete.length > 0) {
+        const participantTasks = participantsToDelete.map(
+            async ({ userId }) =>
+                await deleteParticipantFromGroup(groupId, userId),
+        );
+        tasks.concat(participantTasks);
+    }
+
+    const giftsToDelete = await getGifts(groupId);
+    if (giftsToDelete.length > 0) {
+        const giftTasks = giftsToDelete.map(
+            async ({ id }) => await deleteGiftFromGroup(groupId, id),
+        );
+        tasks.concat(giftTasks);
+    }
+
+    await Promise.all([groupTask, ...tasks]);
 };
 
 export const groupConverter = {
@@ -113,6 +155,9 @@ export const groupConverter = {
             isPublic: data.isPublic,
             participants: new Array<Participant>(),
             gifts: new Array<Gift>(),
+            invitedUsers: data.invitedUsers,
+            description: data.description,
+            ownerId: data.ownerId,
         });
     },
 };

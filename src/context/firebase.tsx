@@ -33,13 +33,15 @@ type doUserLoginOnFirebaseType = (
     email: string,
     password: string,
 ) => Promise<void>;
-type createOrLoginThroughGoogleType = () => Promise<void>;
+type createOrLoginThroughGoogleType = (create: boolean) => Promise<void>;
 type logoutUserFromFirebaseType = () => Promise<void>;
+type getUserAccessType = (userId: string) => Promise<boolean>;
 
 type FirebaseState = {
     user: firebase.User | null;
     isFetchingUser: boolean;
-
+    hasAccess: boolean;
+    getUserAccess: getUserAccessType;
     createUserOnFirebase: createUserOnFirebaseType;
     doUserLoginOnFirebase: doUserLoginOnFirebaseType;
     createOrLoginThroughGoogle: createOrLoginThroughGoogleType;
@@ -55,12 +57,16 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
     // AUTHENTICATION
     const [user, setUser] = useState<firebase.User | null>(null);
     const [isFetchingUser, setIsFetchingUser] = useState(true);
+    const [hasAccess, setHasAccess] = useState(false);
 
-    auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged(async user => {
         if (user) {
             setUser(user);
+            const userAccess = await getUserAccess(user.uid);
+            setHasAccess(userAccess);
         } else {
             setUser(null);
+            setHasAccess(false);
         }
 
         setIsFetchingUser(false);
@@ -105,14 +111,51 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
 
     const logoutUserFromFirebase = async () => await auth.signOut();
 
-    const createOrLoginThroughGoogle: createOrLoginThroughGoogleType = () =>
+    const createOrLoginThroughGoogle: createOrLoginThroughGoogleType = create =>
         new Promise(async (resolve, reject) => {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
-                await firebase.auth().signInWithPopup(provider);
+                const firebaseUser = await firebase
+                    .auth()
+                    .signInWithPopup(provider);
+
+                if (!firebaseUser.user) {
+                    reject();
+                    return;
+                }
+
+                if (create) {
+                    await usersCollection.doc(firebaseUser.user.uid).set({
+                        email: firebaseUser.user.email,
+                    });
+                }
+
                 resolve();
             } catch (err) {
                 reject(err);
+            }
+        });
+
+    const getUserAccess: getUserAccessType = userId =>
+        new Promise(async (resolve, reject) => {
+            try {
+                const userDoc = await usersCollection.doc(userId).get();
+
+                if (!userDoc) {
+                    reject();
+                    return;
+                }
+
+                const data = userDoc.data();
+                resolve(
+                    data &&
+                        (data?.allow ?? false) &&
+                        data.allow !== undefined &&
+                        data.allow,
+                );
+                return;
+            } catch (error) {
+                reject(error);
             }
         });
 
@@ -126,8 +169,10 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                 doUserLoginOnFirebase,
                 logoutUserFromFirebase,
                 createOrLoginThroughGoogle,
+                getUserAccess,
                 user,
                 isFetchingUser,
+                hasAccess,
             }}
         >
             {children}

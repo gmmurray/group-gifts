@@ -1,18 +1,73 @@
-import React, { useState } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 import { useHistory, Link } from 'react-router-dom';
+import LoginForm from '../../components/loginForm/LoginForm';
 import { useAuthentication } from '../../context/authentication';
+import {
+    validateEmail,
+    validatePassword,
+    validatePasswordConfirmation,
+} from '../../helpers/fieldValidation';
+
+const INITIAL_REGISTER_FORM_VALUES: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+} = {
+    email: '',
+    password: '',
+    confirmPassword: '',
+};
+
+const INITIAL_REGISTER_FORM_ERRORS: {
+    email: string | null;
+    password: string | null;
+    confirmPassword: string | null;
+    form: string | null;
+} = {
+    email: null,
+    password: null,
+    confirmPassword: null,
+    form: null,
+};
 
 export const Register = () => {
     const { push } = useHistory();
     const { doRegister, doGoogleLoginOrRegister } = useAuthentication();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [formValues, setFormValues] = useState({
-        email: '',
-        password: '',
-    });
+    const [registerFormValues, setFormValues] = useState(
+        INITIAL_REGISTER_FORM_VALUES,
+    );
+    const [registerFormErrors, setRegisterFormErrors] = useState(
+        INITIAL_REGISTER_FORM_ERRORS,
+    );
 
-    const onSubmit = async () => {
-        const { email, password } = formValues;
+    const doValidation = (): boolean => {
+        const email = validateEmail(registerFormValues.email)
+            ? null
+            : 'Please enter a valid email address';
+        const password = validatePassword(registerFormValues.password)
+            ? null
+            : 'Please enter a valid password';
+        const confirmPassword = validatePasswordConfirmation(
+            registerFormValues.confirmPassword,
+            registerFormValues.password,
+        )
+            ? null
+            : 'Passwords do not match';
+        setRegisterFormErrors({
+            ...registerFormErrors,
+            email,
+            password,
+            confirmPassword,
+        });
+        return email !== null || password !== null || confirmPassword !== null;
+    };
+
+    const onSubmit = async (e: SyntheticEvent) => {
+        e.preventDefault();
+        if (doValidation()) return;
+
+        const { email, password } = registerFormValues;
 
         try {
             setIsSubmitting(true);
@@ -22,12 +77,16 @@ export const Register = () => {
             push('/');
         } catch (e) {
             setIsSubmitting(false);
+            setRegisterFormErrors({
+                ...INITIAL_REGISTER_FORM_ERRORS,
+                form: 'Error registering your account',
+            });
         }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormValues({
-            ...formValues,
+            ...registerFormValues,
             [e.target.name]: e.target.value,
         });
     };
@@ -35,54 +94,51 @@ export const Register = () => {
     const handleGoogleRegister = async () => {
         try {
             setIsSubmitting(true);
-            await doGoogleLoginOrRegister();
+            await doGoogleLoginOrRegister(true);
             push('/');
         } catch (err) {
             setIsSubmitting(false);
         }
     };
 
+    const formInputs = [
+        {
+            label: 'Email address',
+            type: 'email',
+            name: 'email',
+            value: registerFormValues.email,
+            error: registerFormErrors.email,
+        },
+        {
+            label: 'Password',
+            type: 'password',
+            name: 'password',
+            value: registerFormValues.password,
+            error: registerFormErrors.password,
+        },
+        {
+            label: 'Confirm Password',
+            type: 'password',
+            name: 'confirmPassword',
+            value: registerFormValues.confirmPassword,
+            error: registerFormErrors.confirmPassword,
+        },
+    ];
+
     return (
-        <form>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div>
-                    <label htmlFor="email">Email</label>
-                    <input
-                        type="email"
-                        required
-                        id="email"
-                        name="email"
-                        value={formValues.email}
-                        onChange={handleChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="password">Password</label>
-                    <input
-                        type="password"
-                        required
-                        id="password"
-                        name="password"
-                        value={formValues.password}
-                        onChange={handleChange}
-                    />
-                </div>
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        width: 'fit-content',
-                    }}
-                >
-                    <button disabled={isSubmitting} onClick={onSubmit}>
-                        {isSubmitting ? 'registering...' : 'register'}
-                    </button>
-                    <button onClick={handleGoogleRegister}>
-                        Sign up with Google
-                    </button>
-                    <Link to="/login">I already have an account</Link>
-                </div>
-            </div>
-        </form>
+        <LoginForm
+            formTitle="Register"
+            loadingState={isSubmitting}
+            formInputs={formInputs}
+            formError={registerFormErrors.form}
+            onSubmit={onSubmit}
+            onChange={handleChange}
+            onGoogleClick={handleGoogleRegister}
+            renderFooter={
+                <>
+                    Already have an account? <Link to="/login">Login here</Link>
+                </>
+            }
+        />
     );
 };

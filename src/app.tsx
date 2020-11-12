@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Redirect, Switch, Route } from 'react-router-dom';
-import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { useAuthentication } from './context/authentication';
 
 import { authorizedRoutes } from './routes';
+import Unauthorized from './pages/Unauthorized';
 
 export const App = () => {
-    const { isFetchingUser, isLogged } = useAuthentication();
+    const { isFetchingUser, isLogged, hasAccess } = useAuthentication();
 
     if (!isLogged && isFetchingUser) return <h1>Loading user...</h1>;
-
+    if (isLogged && !hasAccess && !isFetchingUser) return <Unauthorized />;
     return isLogged ? <AuthenticatedApp /> : <UnauthenticatedApp />;
 };
 
