@@ -182,22 +182,6 @@ export const Home = () => {
         );
     return (
         <>
-            <div>
-                <h1>
-                    Welcome to home page {user?.displayName ?? user?.email} :)
-                </h1>
-                <button onClick={logout} type="button">
-                    Logout
-                </button>
-                <button
-                    onClick={() => toggleDisplay('profile')}
-                    type="button"
-                    style={{ marginLeft: '2rem', marginRight: '2rem' }}
-                >
-                    Profile
-                </button>
-            </div>
-            <hr />
             <div style={{ display: 'flex' }}>
                 <button
                     onClick={() => toggleDisplay('join')}

@@ -1,6 +1,6 @@
 import { firestore } from 'firebase';
 import { fireDb } from '../db';
-import { IGift, Gift, ICreatedGift } from '../../models/gift';
+import { Gift, ICreatedGift } from '../../models/gift';
 
 export const giftContext = (groupId: string) =>
     fireDb.collection(`groups/${groupId}/gifts`);

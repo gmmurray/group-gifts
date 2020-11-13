@@ -6,6 +6,7 @@ import { useAuthentication } from './context/authentication';
 
 import { authorizedRoutes } from './routes';
 import Unauthorized from './pages/Unauthorized';
+import AuthLayout from './components/layout/AuthLayout';
 
 export const App = () => {
     const { isFetchingUser, isLogged, hasAccess } = useAuthentication();
@@ -21,29 +22,35 @@ const AuthenticatedApp = () => {
     if (!isLogged) return <Redirect to="/login" />;
 
     return (
-        <Switch>
-            {authorizedRoutes.map(
-                ({
-                    path,
-                    exact,
-                    component: Component,
-                }: {
-                    path: string;
-                    exact: boolean;
-                    component: Function;
-                }) => (
-                    <Route
-                        key={path}
-                        path={path}
-                        exact={exact}
-                        render={props => <Component {...props} />}
-                    />
-                ),
-            )}
-            <Route path="/login" exact render={() => <Redirect to="/" />} />
-            <Route path="/register" exact render={() => <Redirect to="/" />} />
-            <Route path="*">Error 404 - Page not found!</Route>
-        </Switch>
+        <AuthLayout>
+            <Switch>
+                {authorizedRoutes.map(
+                    ({
+                        path,
+                        exact,
+                        component: Component,
+                    }: {
+                        path: string;
+                        exact: boolean;
+                        component: Function;
+                    }) => (
+                        <Route
+                            key={path}
+                            path={path}
+                            exact={exact}
+                            render={props => <Component {...props} />}
+                        />
+                    ),
+                )}
+                <Route path="/login" exact render={() => <Redirect to="/" />} />
+                <Route
+                    path="/register"
+                    exact
+                    render={() => <Redirect to="/" />}
+                />
+                <Route path="*">Error 404 - Page not found!</Route>
+            </Switch>
+        </AuthLayout>
     );
 };
 

@@ -5,6 +5,7 @@ import Button from 'react-bootstrap/Button';
 import Spinner from 'react-bootstrap/Spinner';
 import loginCardImg from '../../assets/images/login-card-img.jpg';
 import googleButton from '../../assets/images/btn_google_signin_light_normal_web.png';
+import SpinnerButton from '../SpinnerButton';
 
 import './styles.scss';
 
@@ -64,28 +65,17 @@ const LoginForm = ({
                                 </Form.Group>
                             ),
                         )}
-                        <Button
-                            type="submit"
-                            disabled={loadingState}
-                            onClick={onSubmit}
-                            block
-                            variant="success"
-                        >
-                            {loadingState ? (
-                                <>
-                                    <Spinner
-                                        as="span"
-                                        animation="border"
-                                        size="sm"
-                                        role="status"
-                                        aria-hidden="true"
-                                    />{' '}
-                                    Loading...
-                                </>
-                            ) : (
-                                formTitle
-                            )}
-                        </Button>
+                        <SpinnerButton
+                            loading={loadingState}
+                            staticText={formTitle}
+                            buttonProps={{
+                                type: 'submit',
+                                disabled: loadingState,
+                                onClick: onSubmit,
+                                block: true,
+                                variant: 'success',
+                            }}
+                        />
                         <Form.Text className="text-danger">
                             {formError}
                         </Form.Text>
