@@ -2,7 +2,6 @@ import React, { SyntheticEvent } from 'react';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
-import Spinner from 'react-bootstrap/Spinner';
 import loginCardImg from '../../assets/images/login-card-img.jpg';
 import googleButton from '../../assets/images/btn_google_signin_light_normal_web.png';
 import SpinnerButton from '../SpinnerButton';

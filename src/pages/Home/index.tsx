@@ -1,6 +1,11 @@
 import React, { useState, useEffect, Fragment } from 'react';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Button from 'react-bootstrap/Button';
+
 import { useAuthentication } from '../../context/authentication';
-import { useHistory } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import {
     getGroups,
     createEmptyGroup,
@@ -8,6 +13,9 @@ import {
 import { Group } from '../../models/group';
 import { addParticipantToGroup } from '../../database/repositories/participantRepository';
 
+import './styles.scss';
+
+//#region interfaces
 const DEFAULT_CREATE_GROUP: {
     name: string;
     code: string;
@@ -29,7 +37,6 @@ const DEFAULT_PROFILE_UPDATE: {
     displayName: '',
     photoURL: '',
 };
-
 interface IDisplayType {
     join: boolean;
     create: boolean;
@@ -42,10 +49,15 @@ const DEFAULT_DISPLAY: IDisplayType = {
     groups: false,
     profile: false,
 };
+//#endregion
 
 export const Home = () => {
+    //#region context
     const { push } = useHistory();
     const { doLogout, user, doProfileUpdate } = useAuthentication();
+    //#endregion
+
+    //#region state
     const [groups, setGroups] = useState(Array<Group>());
     const [groupsLoaded, setGroupsLoaded] = useState(false);
     const [display, setDisplay] = useState(DEFAULT_DISPLAY);
@@ -53,7 +65,9 @@ export const Home = () => {
         DEFAULT_CREATE_GROUP,
     );
     const [profileForm, setProfileForm] = useState(DEFAULT_PROFILE_UPDATE);
+    //#endregion
 
+    //#region side effects
     useEffect(() => {
         const getGroupData = async () => {
             try {
@@ -62,7 +76,6 @@ export const Home = () => {
                     setGroups(result);
                     setGroupsLoaded(true);
                 }
-                return result;
             } catch (error) {
                 console.log(error);
             }
@@ -75,13 +88,9 @@ export const Home = () => {
 
         if (!display?.profile) setProfileForm(DEFAULT_PROFILE_UPDATE);
     }, [display, setCreateGroupForm]);
+    //#endregion
 
-    const logout = async () => {
-        await doLogout();
-
-        push('/login');
-    };
-
+    //#region callbacks
     const toggleDisplay = (displayKey: keyof IDisplayType) => {
         setDisplay({ ...DEFAULT_DISPLAY, [displayKey]: !display[displayKey] });
     };
@@ -155,7 +164,9 @@ export const Home = () => {
             [e.target.name]: e.target.value,
         });
     };
+    //#endregion
 
+    //#region local variables
     const userGroups =
         groups &&
         groups?.filter(
@@ -180,31 +191,88 @@ export const Home = () => {
                     group.invitedUsers.some(id => id === user?.uid)) ||
                     group.ownerId === user?.uid),
         );
+    //#endregion
+
+    //#region render
     return (
         <>
-            <div style={{ display: 'flex' }}>
-                <button
-                    onClick={() => toggleDisplay('join')}
-                    type="button"
-                    style={{ marginRight: '2rem' }}
-                >
-                    Join a group
-                </button>
-                <button
-                    onClick={() => toggleDisplay('create')}
-                    type="button"
-                    style={{ marginLeft: '2rem', marginRight: '2rem' }}
-                >
-                    Create a group
-                </button>
-                <button
-                    onClick={() => toggleDisplay('groups')}
-                    type="button"
-                    style={{ marginLeft: '2rem' }}
-                >
-                    View my groups
-                </button>
-            </div>
+            <Container
+                fluid
+                className="position-relative overflow-hidden p-md-5 text-center bg-light"
+            >
+                <Col md={5} className="p-lg-5 mx-auto my-5">
+                    <h1 className="display-4 font-weight-normal">Group Gift</h1>
+                    <p className="lead font-weight-normal">
+                        The best way to plan wish lists for any gift-buying
+                        event
+                    </p>
+                </Col>
+            </Container>
+            <Container fluid className="pl-0 pr-0 py-2 py-lg-5">
+                <Row noGutters className="w-100 text-center">
+                    <Col
+                        lg={4}
+                        className="w-100 bg-dark text-light home-column"
+                    >
+                        <Container className="my-3 py-3">
+                            <h1 className="display-5">
+                                Join an existing group
+                            </h1>
+                            <p className="lead">
+                                Click below to view groups that have already
+                                been created. The owner of each group will need
+                                to invite you for you to be able to see their
+                                group
+                            </p>
+                            <Button
+                                variant="outline-light"
+                                as={Link}
+                                to="/join"
+                            >
+                                Join now
+                            </Button>
+                        </Container>
+                    </Col>
+                    <Col lg={4} className="w-100 bg-light home-column">
+                        <Container className="my-3 py-3">
+                            <h1 className="display-5">Create a new group</h1>
+                            <p className="lead">
+                                Click below to create a new group. You can
+                                invite as many people to the group as you want.
+                                The more the merrier!
+                            </p>
+                            <Button
+                                variant="outline-dark"
+                                as={Link}
+                                to="/create"
+                            >
+                                Create now
+                            </Button>
+                        </Container>
+                    </Col>
+                    <Col
+                        lg={4}
+                        className="w-100 bg-dark text-light home-column"
+                    >
+                        <Container className="my-3 py-3">
+                            <h1 className="display-5">View your groups</h1>
+                            <p className="lead">
+                                Click below to view the groups that you have
+                                already joined. You will be able to see what the
+                                group is for, the people in the group, and
+                                available gifts (except yours of course!).
+                            </p>
+                            <Button
+                                variant="outline-light"
+                                as={Link}
+                                to="/view"
+                            >
+                                View now
+                            </Button>
+                        </Container>
+                    </Col>
+                </Row>
+            </Container>
             {display.profile && (
                 <>
                     <hr />
@@ -362,4 +430,5 @@ export const Home = () => {
             )}
         </>
     );
+    //#endregion
 };

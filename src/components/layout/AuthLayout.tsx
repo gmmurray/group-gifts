@@ -12,7 +12,7 @@ import ProfileModal from './ProfileModal';
 interface IAuthLayoutProps {}
 
 const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
-    const { push, location } = useHistory();
+    const { push } = useHistory();
     const { user, doLogout } = useAuthentication();
     const [profileModalOpen, setProfileModalOpen] = useState(false);
 
@@ -22,8 +22,8 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
     }, [doLogout, push]);
 
     return (
-        <>
-            <Navbar expand="lg" variant="dark" bg="dark">
+        <Container fluid>
+            <Navbar expand="lg" variant="dark" bg="dark-blue">
                 <Container>
                     <Navbar.Brand as={NavLink} to="/">
                         Group Gift
@@ -45,7 +45,7 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                             </Nav.Link>
                         </Nav>
                         {user && (
-                            <span className="text-secondary">
+                            <span className="text-white">
                                 Hi {user.displayName || user.email}!
                             </span>
                         )}
@@ -58,8 +58,8 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                     </Navbar.Collapse>
                 </Container>
             </Navbar>
-            <Container>{children}</Container>
-            <Navbar expand={false} fixed="bottom" variant="dark" bg="dark">
+            <div>{children}</div>
+            <Navbar expand={false} variant="dark" bg="dark-blue" fixed="bottom">
                 <Container>
                     <Row className="w-100 text-center">
                         <Col lg={4}></Col>
@@ -83,7 +83,7 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                 open={profileModalOpen}
                 onClose={() => setProfileModalOpen(false)}
             />
-        </>
+        </Container>
     );
 };
 

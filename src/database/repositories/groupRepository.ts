@@ -1,3 +1,4 @@
+import { group } from 'console';
 import { firestore } from 'firebase';
 import { Gift } from '../../models/gift';
 import { Group, IGroup } from '../../models/group';
@@ -55,7 +56,66 @@ export const getGroups = async (
 
         retrievedGroups.push(result);
     });
-    return retrievedGroups;
+
+    const results = new Array<Group>();
+    for (let group of retrievedGroups) {
+        if (includeParticipants) {
+            getParticipants(group.id).then(
+                retrievedParticipants =>
+                    (group.participants = [...retrievedParticipants]),
+            );
+        }
+
+        if (includeGifts) {
+            getGifts(group.id).then(
+                retrievedGifts => (group.gifts = [...retrievedGifts]),
+            );
+        }
+        results.push(group);
+    }
+    return results;
+};
+
+export const getJoinableGroups = async (
+    userId: string,
+): Promise<Array<Group>> => {
+    const snapshot = await groupContext
+        .where('invitedUsers', 'array-contains', userId)
+        .withConverter(groupConverter)
+        .get();
+
+    const retrievedGroups = new Array<Group>();
+    snapshot.forEach(g => {
+        const group = new Group(g.data());
+        if (group.ownerId !== userId) {
+            group.code = '';
+            retrievedGroups.push(group);
+        }
+    });
+
+    const results = new Array<Group>();
+    for (let group of retrievedGroups) {
+        const participants = await getParticipants(group.id);
+        if (
+            participants.length === 0 ||
+            participants.every(p => p.userId !== userId)
+        ) {
+            group.participants = [...participants];
+            results.push(group);
+        }
+    }
+    return results;
+};
+
+export const verifyGroupCode = async (
+    groupId: string,
+    code: string,
+): Promise<boolean> => {
+    const group = await groupContext
+        .withConverter(groupConverter)
+        .doc(groupId)
+        .get();
+    return group && (group?.data()?.code === code ?? false);
 };
 
 export const getShallowGroup = async (groupId: string) => {

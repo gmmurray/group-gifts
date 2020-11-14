@@ -5,16 +5,13 @@ import React, {
     useEffect,
     useState,
 } from 'react';
-import Modal from 'react-bootstrap/Modal';
-import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button';
 
 import { useAuthentication } from '../../context/authentication';
 import {
     validateDisplayName,
     validatePhotoURL,
 } from '../../helpers/fieldValidation';
-import SpinnerButton from '../SpinnerButton';
+import ModalForm from '../ModalForm';
 
 const INITIAL_PROFILE_FORM_VALUES: {
     displayName: string;
@@ -113,73 +110,48 @@ const ProfileModal: FunctionComponent<IProfileModal> = ({ open, onClose }) => {
         [setProfileFormValues, profileFormValues],
     );
 
+    const modalProps: {
+        size: 'sm' | 'lg' | 'xl';
+        centered: boolean;
+    } = {
+        size: 'lg',
+        centered: true,
+    };
+
+    const textInputs = [
+        {
+            label: 'Display Name',
+            type: 'text',
+            name: 'displayName',
+            value: profileFormValues.displayName,
+            error: profileFormErrors.displayName,
+            placeholder: user?.displayName ?? 'Display name',
+        },
+        {
+            label: 'Photo URL',
+            type: 'text',
+            name: 'photoURL',
+            value: profileFormValues.photoURL,
+            error: profileFormErrors.photoURL,
+            placeholder: user?.photoURL ?? 'Photo URL',
+            helpText:
+                'Copy and paste the full link to an image found somewhere on the internet',
+        },
+    ];
+
     return (
-        <Modal
+        <ModalForm
+            title="Update your profile"
+            loading={isSubmitting}
             show={open}
-            onHide={onClose}
-            size="lg"
-            aria-labelledby="profile-modal-title"
-            centered
-        >
-            <Modal.Header closeButton>
-                <Modal.Title id="profile-modal-title">
-                    Update your profile
-                </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form noValidate>
-                    <Form.Group controlId="displayName">
-                        <Form.Label>Display Name</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="displayName"
-                            value={profileFormValues.displayName}
-                            onChange={handleChange}
-                            isInvalid={!!profileFormErrors.displayName}
-                            placeholder={user?.displayName ?? 'Display name'}
-                        />
-                        <Form.Control.Feedback type="invalid">
-                            {profileFormErrors.displayName}
-                        </Form.Control.Feedback>
-                    </Form.Group>
-                    <Form.Group controlId="photoURL">
-                        <Form.Label>Photo URL</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="photoURL"
-                            value={profileFormValues.photoURL}
-                            onChange={handleChange}
-                            isInvalid={!!profileFormErrors.photoURL}
-                            placeholder={user?.photoURL ?? 'Photo URL'}
-                            aria-describedby="photoHelpText"
-                        />
-                        <Form.Text id="photoHelpText" muted>
-                            Copy and paste the full link to an image found
-                            somewhere on the internet
-                        </Form.Text>
-                        <Form.Control.Feedback type="invalid">
-                            {profileFormErrors.photoURL}
-                        </Form.Control.Feedback>
-                    </Form.Group>
-                </Form>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button onClick={onClose} variant="secondary">
-                    Cancel
-                </Button>
-                <SpinnerButton
-                    loading={isSubmitting}
-                    staticText="Save"
-                    loadingText="Saving..."
-                    buttonProps={{
-                        type: 'submit',
-                        disabled: isSubmitting,
-                        onClick: onSubmit,
-                        variant: 'success',
-                    }}
-                />
-            </Modal.Footer>
-        </Modal>
+            submitText="Save"
+            submitProcessingText="Saving..."
+            modalProps={modalProps}
+            textInputs={textInputs}
+            onClose={onClose}
+            onChange={handleChange}
+            onSubmit={onSubmit}
+        />
     );
 };
 
