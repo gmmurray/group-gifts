@@ -1,5 +1,6 @@
 import Gifts from './pages/Gifts';
 import Group from './pages/Groups';
+import CreateGroup from './pages/Groups/CreateGroup';
 import JoinGroup from './pages/Groups/JoinGroup';
 import { Home } from './pages/Home';
 
@@ -18,6 +19,11 @@ export const authorizedRoutes = [
         path: '/join',
         exact: true,
         component: JoinGroup,
+    },
+    {
+        path: '/create',
+        exact: true,
+        component: CreateGroup,
     },
     {
         path: '/groups/:groupId/gifts/',

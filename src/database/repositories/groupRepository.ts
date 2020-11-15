@@ -1,4 +1,3 @@
-import { group } from 'console';
 import { firestore } from 'firebase';
 import { Gift } from '../../models/gift';
 import { Group, IGroup } from '../../models/group';

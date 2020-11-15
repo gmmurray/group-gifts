@@ -19,6 +19,7 @@ import {
 } from '../../database/repositories/groupRepository';
 import { Group } from '../../models/group';
 import { addParticipantToGroup } from '../../database/repositories/participantRepository';
+import PageSpinner from '../../components/PageSpinner';
 
 //#region interfaces
 interface IJoinGroup {}
@@ -157,13 +158,13 @@ const JoinGroup: FunctionComponent<IJoinGroup> = () => {
                             )}
                         </CardDeck>
                     ) : (
-                        <h1 className="display-5">
-                            No available groups. You should create one, or ask a
+                        <h1 className="display-5 text-center">
+                            No available groups. You can create one, or ask a
                             friend to invite you!
                         </h1>
                     )
                 ) : (
-                    <h1 className="display-5">Loading...</h1>
+                    <PageSpinner />
                 )}
             </Container>
         </Container>

@@ -8,12 +8,14 @@ import Container from 'react-bootstrap/Container';
 
 import { useAuthentication } from '../../context/authentication';
 import ProfileModal from './ProfileModal';
+import useWindowDimensions from './windowDimensions';
 
 interface IAuthLayoutProps {}
 
 const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
     const { push } = useHistory();
     const { user, doLogout } = useAuthentication();
+    const { bodyHeight, documentHeight } = useWindowDimensions();
     const [profileModalOpen, setProfileModalOpen] = useState(false);
 
     const handleLogout = useCallback(async () => {
@@ -59,7 +61,12 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                 </Container>
             </Navbar>
             <div>{children}</div>
-            <Navbar expand={false} variant="dark" bg="dark-blue" fixed="bottom">
+            <Navbar
+                expand={false}
+                variant="dark"
+                bg="dark-blue"
+                fixed={bodyHeight <= documentHeight ? 'bottom' : undefined}
+            >
                 <Container>
                     <Row className="w-100 text-center">
                         <Col lg={4}></Col>

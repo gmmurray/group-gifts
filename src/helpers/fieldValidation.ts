@@ -19,6 +19,12 @@ export const validateDisplayName = (
 export const validatePhotoURL = (input: string | null): boolean =>
     !isNotNullOrEmpty(input) || isValidURL(input!);
 
+export const validateGroupCode = (input: string | null): boolean =>
+    isNotNullOrEmpty(input) && input!.length >= 4;
+
+export const validateRequiredField = (input: string | null): boolean =>
+    isNotNullOrEmpty(input);
+
 const isValidURL = (url: string): boolean =>
     url.match(
         /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g,
