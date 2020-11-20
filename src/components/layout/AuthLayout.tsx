@@ -10,6 +10,8 @@ import { useAuthentication } from '../../context/authentication';
 import ProfileModal from './ProfileModal';
 import { useWindowDimensions } from '../../context/windowDimensions';
 
+import LogoOnly from '../../assets/images/group-gift-logo-only.png';
+
 interface IAuthLayoutProps {}
 
 const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
@@ -29,7 +31,13 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
             <Navbar expand="lg" variant="dark" bg="dark-blue">
                 <Container>
                     <Navbar.Brand as={NavLink} to="/">
-                        Group Gift
+                        <img
+                            src={LogoOnly}
+                            width="30"
+                            height="30"
+                            className="d-inline-block align-top"
+                            alt="Group Gift Logo"
+                        />
                     </Navbar.Brand>
                     <Navbar.Toggle aria-controls="auth-navbar" />
                     <Navbar.Collapse id="auth-navbar">
