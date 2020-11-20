@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { App } from './app';
 import { RootProvider } from './rootProviders';
 
-import 'bootstrap/dist/css/bootstrap.min.css';
 import './rootStyles.scss';
 
 ReactDOM.render(

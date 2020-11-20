@@ -1,6 +1,6 @@
 import { firestore } from 'firebase';
 import { Gift } from '../../models/gift';
-import { Group, IGroup } from '../../models/group';
+import { Group, IGroup, IGroupUpdate, ViewGroup } from '../../models/group';
 import { Participant } from '../../models/participant';
 import { fireDb } from '../db';
 import { deleteGiftFromGroup, getGifts, getUserGifts } from './giftRepository';
@@ -106,6 +106,28 @@ export const getJoinableGroups = async (
     return results;
 };
 
+export const getUserGroups = async (userId: string): Promise<Array<Group>> => {
+    const snapshot = await groupContext.withConverter(groupConverter).get();
+
+    const retrievedGroups = new Array<Group>();
+    snapshot.forEach(g => {
+        const group = new Group(g.data());
+        group.code = '';
+        retrievedGroups.push(group);
+    });
+
+    const results = new Array<Group>();
+    for (let group of retrievedGroups) {
+        const participants = await getParticipants(group.id);
+        if (participants.some(p => p.userId === userId)) {
+            group.participants = [...participants];
+            results.push(group);
+        }
+    }
+
+    return results;
+};
+
 export const verifyGroupCode = async (
     groupId: string,
     code: string,
@@ -130,18 +152,27 @@ export const getShallowGroup = async (groupId: string) => {
     }
 };
 
-export const getFullGroup = async (groupId: string) => {
-    const retrievedGroup = await getShallowGroup(groupId);
+export const getFullGroup = async (groupId: string, userId?: string) => {
+    let retrievedGroup = await getShallowGroup(groupId);
     if (retrievedGroup === null || retrievedGroup === undefined) return null;
 
     const retrievedParticipants = await getParticipants(groupId);
     const retrievedGifts = await getGifts(groupId);
 
-    return new Group({
-        ...retrievedGroup,
-        participants: [...retrievedParticipants],
-        gifts: [...retrievedGifts],
+    await Promise.all([retrievedParticipants, retrievedGifts]).then(result => {
+        retrievedGroup = {
+            ...retrievedGroup!,
+            participants: result[0],
+            gifts: result[1],
+        };
     });
+
+    if (userId) {
+        retrievedGroup.gifts = retrievedGroup.gifts.filter(
+            g => g.userId !== userId,
+        );
+    }
+    return retrievedGroup;
 };
 
 export const createEmptyGroup = async (group: {
@@ -191,6 +222,13 @@ export const deleteGroup = async (groupId: string) => {
     }
 
     await Promise.all([groupTask, ...tasks]);
+};
+
+export const updateGroup = async (groupId: string, updates: IGroupUpdate) => {
+    await groupContext.doc(groupId).update({
+        ...updates,
+        invitedUsers: firestore.FieldValue.arrayUnion(...updates.invitedUsers),
+    });
 };
 
 export const groupConverter = {

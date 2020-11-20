@@ -1,62 +1,72 @@
-import React, { useEffect, useState } from 'react';
-import { useAuthentication } from '../../context/authentication';
-import {
-    addGiftToGroup,
-    deleteGiftFromGroup,
-    getUserGifts,
-} from '../../database/repositories/giftRepository';
-import { Gift } from '../../models/gift';
+import React, {
+    FunctionComponent,
+    useCallback,
+    useEffect,
+    useState,
+} from 'react';
+import { useHistory } from 'react-router-dom';
+import Button from 'react-bootstrap/Button';
+import ButtonToolbar from 'react-bootstrap/ButtonToolbar';
+import InputGroup from 'react-bootstrap/InputGroup';
+import FormControl from 'react-bootstrap/FormControl';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 
-interface IGiftsProps {
+import { useAuthentication } from '../../context/authentication';
+import { useWindowDimensions } from '../../context/windowDimensions';
+import { getUserGifts } from '../../database/repositories/giftRepository';
+import { checkGroupMembership } from '../../database/repositories/participantRepository';
+import { Gift, UserGift } from '../../models/gift';
+import { DEFAULT_LOAD_STATE } from '../../shared/defaultTypes';
+import BasicPage from '../../components/BasicPage';
+import GiftCard, { GiftCardAction } from '../../components/GiftCard';
+import PageSpinner from '../../components/PageSpinner';
+import CreateUpdateGiftModal from '../Groups/CreateUpdateGiftModal';
+
+//#region types
+type ModalStateType = {
+    open: boolean;
+    type: 'create' | 'update' | null;
+    giftId: string | null;
+};
+
+type GiftsPropsType = {
     match: {
         params: {
             groupId: string;
         };
     };
-    history: {
-        push: Function;
-    };
-    groupId: string;
-}
-
-const DEFAULT_LOAD_STATE: { loaded: boolean; error: string | null } = {
-    loaded: false,
-    error: null,
 };
+//#endregion
 
-interface IDisplayType {
-    create: boolean;
-}
-
-const DEFAULT_DISPLAY: IDisplayType = {
-    create: false,
+//#region initial values and constants
+const DEFAULT_MODAL_STATE: ModalStateType = {
+    open: false,
+    type: null,
+    giftId: null,
 };
+//#endregion
 
-const DEFAULT_GIFT_FORM: {
-    name: string;
-    webUrl: string;
-    price: string;
-    note: string;
-} = {
-    name: '',
-    webUrl: '',
-    price: '',
-    note: '',
-};
-
-const Gifts = ({
+const Gifts: FunctionComponent<GiftsPropsType> = ({
     match: {
         params: { groupId },
     },
-    history: { push },
-}: IGiftsProps) => {
+}) => {
+    //#region context
     const { user } = useAuthentication();
-    const [giftsLoaded, setGiftsLoaded] = useState(DEFAULT_LOAD_STATE);
-    const [display, setDisplay] = useState(DEFAULT_DISPLAY);
-    const [userGifts, setUserGifts] = useState(new Array<Partial<Gift>>());
-    const [giftForm, setGiftForm] = useState(DEFAULT_GIFT_FORM);
+    const { push } = useHistory();
+    const { recalcDimensions } = useWindowDimensions();
+    //#endregion
 
-    const getGroupData = async () => {
+    //#region state
+    const [giftsLoaded, setGiftsLoaded] = useState(DEFAULT_LOAD_STATE);
+    const [userGifts, setUserGifts] = useState(new Array<UserGift>());
+    const [modalOpen, setModalOpen] = useState(DEFAULT_MODAL_STATE);
+    const [giftFilter, setGiftFilter] = useState('');
+    //#endregion
+
+    const getGiftData = useCallback(async (): Promise<void> => {
         const result = await getUserGifts(groupId, user?.uid!);
         if (result !== null) {
             setGiftsLoaded({ ...giftsLoaded, loaded: true });
@@ -64,11 +74,7 @@ const Gifts = ({
                 setUserGifts(new Array<Gift>());
                 return;
             }
-            const formattedResult = result.map(g => ({
-                ...g,
-                status: undefined,
-            }));
-            setUserGifts(formattedResult);
+            setUserGifts(result);
         } else {
             setGiftsLoaded({
                 ...giftsLoaded,
@@ -76,173 +82,181 @@ const Gifts = ({
                 error: 'Error loading gifts',
             });
         }
-    };
-
-    useEffect(() => {
-        getGroupData();
     }, []);
 
+    //#region effects
     useEffect(() => {
-        if (!display?.create) {
-            setGiftForm(DEFAULT_GIFT_FORM);
-        }
-    }, [display, setGiftForm]);
-
-    const handleFormChange = (
-        e:
-            | React.ChangeEvent<HTMLInputElement>
-            | React.ChangeEvent<HTMLTextAreaElement>,
-    ) => {
-        setGiftForm({
-            ...giftForm,
-            [e.target.name]: e.target.value,
-        });
-    };
-
-    const createGift = async () => {
         if (user !== null) {
-            const newGift = await addGiftToGroup(groupId, user, giftForm);
-            if (newGift) {
-                setDisplay({ ...DEFAULT_DISPLAY, create: false });
-                await getGroupData();
-                return;
+            const hasAccess = checkGroupMembership(groupId, user.uid);
+            if (hasAccess) {
+                getGiftData();
+            } else {
+                push('/groups');
             }
         }
-        alert('Error creating gift');
-    };
+    }, []);
 
-    const deleteGift = async (giftId: string) => {
-        try {
-            await deleteGiftFromGroup(groupId, giftId);
-            await getGroupData();
-        } catch (error) {
-            console.log(error);
-            alert('Error deleting gift');
-        }
-    };
+    useEffect((): void => {
+        if (giftsLoaded.loaded) recalcDimensions();
+    }, [giftsLoaded.loaded, recalcDimensions]);
+    //#endregion
 
-    const toggleDisplay = (displayKey: keyof IDisplayType) => {
-        setDisplay({ ...DEFAULT_DISPLAY, [displayKey]: !display[displayKey] });
-    };
+    //#region callbacks
+    const handleGiftFilter = useCallback((): Array<UserGift> => {
+        const searchProps = (gift: UserGift, filter: string) => {
+            const lowerFilter = filter.toLocaleLowerCase();
+            return (
+                gift.name.toLocaleLowerCase().includes(lowerFilter) ||
+                gift.note.toLocaleLowerCase().includes(lowerFilter)
+            );
+        };
 
-    if (!giftsLoaded?.loaded) {
-        return (
-            <div>
-                <h1>Loading gifts...</h1>
-            </div>
-        );
-    } else if (giftsLoaded.error !== null) {
-        return (
-            <div>
-                <h1>{giftsLoaded.error}</h1>
-            </div>
-        );
-    }
+        return userGifts.filter(gift => searchProps(gift, giftFilter));
+    }, [giftFilter, userGifts]);
+
+    const clearAlert = useCallback((): void => {
+        setGiftsLoaded(state => ({
+            ...state,
+            error: DEFAULT_LOAD_STATE.error,
+        }));
+    }, [setGiftsLoaded]);
+
+    const handleFilterChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>): void =>
+            setGiftFilter(e.target.value),
+        [setGiftFilter],
+    );
+
+    const resetGiftFilter = useCallback((): void => setGiftFilter(''), [
+        setGiftFilter,
+    ]);
+
+    const handleModalClose = useCallback(async (): Promise<void> => {
+        setModalOpen(state => ({
+            ...state,
+            open: false,
+            type: null,
+            giftId: null,
+        }));
+        await getGiftData();
+    }, [setModalOpen, getGiftData]);
+    //#endregion
+
+    //#region render header
+    const renderHeader = useCallback(
+        (): React.ReactNode => (
+            <>
+                <h1 className="display-4">Wish List</h1>
+                <p className="lead">
+                    You probably won't get them all but you can definitely try!
+                </p>
+                <Button
+                    variant="primary"
+                    onClick={() =>
+                        setModalOpen(state => ({
+                            ...state,
+                            open: true,
+                            type: 'create',
+                        }))
+                    }
+                >
+                    Add a gift
+                </Button>
+            </>
+        ),
+        [setModalOpen],
+    );
+    //#endregion
+
+    const alertText = giftsLoaded.error;
 
     return (
-        <div>
-            <>
-                <button onClick={() => push('/')}>Home</button>
-                <br />
-                <button onClick={() => push(`/groups/${groupId}`)}>
-                    Group
-                </button>
-                <br />
-                <h1>Gifts</h1>
-                <button onClick={() => toggleDisplay('create')}>
-                    Add Gift
-                </button>
-                {display.create && (
-                    <>
-                        <hr />
-                        <div>
-                            <h4>New Gift</h4>
-                            <div style={{ marginBottom: '2rem' }}>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    required
-                                    value={giftForm.name}
-                                    onChange={handleFormChange}
-                                    placeholder="Name"
-                                    style={{ marginRight: '2rem ' }}
-                                />
-                                <input
-                                    type="text"
-                                    name="price"
-                                    id="price"
-                                    required
-                                    value={giftForm.price}
-                                    onChange={handleFormChange}
-                                    placeholder="Price"
-                                    style={{ marginRight: '2rem ' }}
-                                />
-                                <input
-                                    type="text"
-                                    name="webUrl"
-                                    id="webUrl"
-                                    value={giftForm.webUrl}
-                                    onChange={handleFormChange}
-                                    placeholder="Link"
-                                    style={{ marginRight: '2rem ' }}
-                                />
-                                <textarea
-                                    name="note"
-                                    id="note"
-                                    value={giftForm.note}
-                                    onChange={handleFormChange}
-                                    placeholder="Note"
-                                    rows={3}
-                                />
-                            </div>
-                            <div>
-                                <button onClick={createGift}>
-                                    Create gift
-                                </button>
-                            </div>
-                        </div>
-                    </>
-                )}
-                {userGifts.length === 0 && (
-                    <div>
-                        <h2>You haven't added any gifts yet.</h2>
-                    </div>
-                )}
-                {userGifts.length > 0 && (
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'space-around',
-                        }}
+        <BasicPage
+            showAlert={!!alertText}
+            onAlertClose={clearAlert}
+            alertText={alertText || ''}
+            renderHeader={renderHeader()}
+        >
+            <ButtonToolbar
+                aria-label="gift filter"
+                className="justify-content-center mt-2"
+            >
+                <ButtonGroup
+                    aria-label="return to group"
+                    className="mb-2 mr-lg-auto"
+                >
+                    <Button
+                        variant="primary"
+                        onClick={() => push(`/groups/${groupId}`)}
                     >
-                        {userGifts.map(({ id, name, price, webUrl }) => {
-                            if (id) {
+                        Back to group
+                    </Button>
+                </ButtonGroup>
+                <InputGroup className="mb-2">
+                    <FormControl
+                        placeholder="Search"
+                        aria-label="Search gifts"
+                        onChange={handleFilterChange}
+                        value={giftFilter}
+                    />
+                    <InputGroup.Append>
+                        <Button variant="primary" onClick={resetGiftFilter}>
+                            Reset
+                        </Button>
+                    </InputGroup.Append>
+                </InputGroup>
+            </ButtonToolbar>
+            {giftsLoaded.loaded ? (
+                userGifts && userGifts.length > 0 ? (
+                    <Row xs={1} lg={3}>
+                        {handleGiftFilter().map(
+                            ({ id, name, price, webUrl, note }: UserGift) => {
+                                const actions: Array<GiftCardAction> = [
+                                    {
+                                        name: 'Update',
+                                        onClick: () =>
+                                            setModalOpen(state => ({
+                                                ...state,
+                                                open: true,
+                                                type: 'update',
+                                                giftId: id,
+                                            })),
+                                        variant: 'primary',
+                                    },
+                                ];
                                 return (
-                                    <div
-                                        key={id}
-                                        style={{
-                                            border: '2px solid black',
-                                            padding: '2rem',
-                                        }}
-                                    >
-                                        <h3>{name}</h3>
-                                        <h5>${price}</h5>
-                                        <ul>
-                                            <li>{webUrl}</li>
-                                        </ul>
-                                        <button onClick={() => deleteGift(id)}>
-                                            Delete
-                                        </button>
-                                    </div>
+                                    <Col key={id} className="mb-4">
+                                        <GiftCard
+                                            id={id}
+                                            name={name}
+                                            webUrl={webUrl}
+                                            price={price}
+                                            note={note}
+                                            actions={actions}
+                                            bg="light"
+                                        />
+                                    </Col>
                                 );
-                            }
-                            return null;
-                        })}
-                    </div>
-                )}
-            </>
-        </div>
+                            },
+                        )}
+                    </Row>
+                ) : (
+                    <h1 className="display-5 text-center">
+                        You haven't added any gifts to your wish list yet.
+                        Better work on that...
+                    </h1>
+                )
+            ) : (
+                <PageSpinner />
+            )}
+            <CreateUpdateGiftModal
+                open={modalOpen.open}
+                type={modalOpen.type}
+                giftId={modalOpen.giftId}
+                onClose={handleModalClose}
+                groupId={groupId}
+            />
+        </BasicPage>
     );
 };
 

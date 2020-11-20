@@ -27,7 +27,7 @@ const INITIAL_LOGIN_FORM_ERRORS: {
 
 export const Login = () => {
     const { push } = useHistory();
-    const { doLogin, doGoogleLoginOrRegister } = useAuthentication();
+    const { doLogin, doGoogleLogin } = useAuthentication();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loginFormValues, setLoginFormValues] = useState(
         INITIAL_LOGIN_FORM_VALUES,
@@ -82,7 +82,7 @@ export const Login = () => {
     const handleGoogleLogin = async () => {
         try {
             setIsSubmitting(true);
-            await doGoogleLoginOrRegister(false);
+            await doGoogleLogin();
             push('/');
         } catch (err) {
             setIsSubmitting(false);

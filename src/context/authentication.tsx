@@ -1,15 +1,11 @@
-import React, {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState,
-} from 'react';
+import React, { createContext, ReactNode, useContext } from 'react';
+import { updateUserDetail } from '../database/repositories/userDetailRepository';
 import { useFirebase } from './firebase';
 
 type doLoginType = (email: string, password: string) => Promise<void>;
 type doRegisterType = (email: string, password: string) => Promise<void>;
-type doGoogleLoginOrRegisterType = (create: boolean) => Promise<void>;
+type doGooglerRegisterType = () => Promise<void>;
+type doGoogleLoginType = () => Promise<void>;
 type doLogoutType = () => Promise<void>;
 
 type updateType = {
@@ -25,7 +21,8 @@ type AuthenticationContextState = {
     user: firebase.User | null;
     doLogin: doLoginType;
     doRegister: doRegisterType;
-    doGoogleLoginOrRegister: doGoogleLoginOrRegisterType;
+    doGoogleLogin: doGoogleLoginType;
+    doGoogleRegister: doGooglerRegisterType;
     doLogout: doLogoutType;
     doProfileUpdate: doProfileUpdateType;
 };
@@ -43,7 +40,8 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
         createUserOnFirebase,
         doUserLoginOnFirebase,
         logoutUserFromFirebase,
-        createOrLoginThroughGoogle,
+        createThroughGoogle,
+        loginThroughGoogle,
         hasAccess,
         user,
         isFetchingUser,
@@ -72,10 +70,20 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
 
     const doLogout: doLogoutType = async () => await logoutUserFromFirebase();
 
-    const doGoogleLoginOrRegister: doGoogleLoginOrRegisterType = create =>
+    const doGoogleLogin: doGoogleLoginType = () =>
         new Promise(async (resolve, reject) => {
             try {
-                await createOrLoginThroughGoogle(create);
+                await loginThroughGoogle();
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        });
+
+    const doGoogleRegister: doGooglerRegisterType = () =>
+        new Promise(async (resolve, reject) => {
+            try {
+                await createThroughGoogle();
                 resolve();
             } catch (err) {
                 reject(err);
@@ -90,6 +98,7 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
                     await user.updateProfile({
                         ...updates,
                     });
+                    await updateUserDetail(user.uid, { ...updates });
                     resolve();
                 } else {
                     throw Error('User does not exist');
@@ -106,7 +115,8 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
                 isFetchingUser,
                 doLogin,
                 doRegister,
-                doGoogleLoginOrRegister,
+                doGoogleLogin,
+                doGoogleRegister,
                 doLogout,
                 doProfileUpdate,
                 hasAccess,

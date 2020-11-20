@@ -7,13 +7,13 @@ import { useAuthentication } from './context/authentication';
 import { authorizedRoutes } from './routes';
 import Unauthorized from './pages/Unauthorized';
 import AuthLayout from './components/layout/AuthLayout';
+import PageSpinner from './components/PageSpinner';
 
 export const App = () => {
     const { isFetchingUser, isLogged, hasAccess } = useAuthentication();
-
-    if (!isLogged && isFetchingUser) return <h1>Loading user...</h1>;
-    if (isLogged && !hasAccess && !isFetchingUser) return <Unauthorized />;
-    return isLogged ? <AuthenticatedApp /> : <UnauthenticatedApp />;
+    if (isFetchingUser) return <PageSpinner />;
+    else if (!isLogged) return <UnauthenticatedApp />;
+    else return hasAccess ? <AuthenticatedApp /> : <Unauthorized />;
 };
 
 const AuthenticatedApp = () => {

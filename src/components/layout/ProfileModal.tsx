@@ -31,13 +31,26 @@ const INITIAL_PROFILE_FORM_ERRORS: {
     form: null,
 };
 
+const INITIAL_PROFILE_FORM_DIRTY: {
+    displayName: boolean;
+    photoURL: boolean;
+} = {
+    displayName: false,
+    photoURL: false,
+};
+
 interface IProfileModal {
     open: boolean;
     onClose: () => void;
+    user: firebase.User | null;
 }
 
-const ProfileModal: FunctionComponent<IProfileModal> = ({ open, onClose }) => {
-    const { user, doProfileUpdate } = useAuthentication();
+const ProfileModal: FunctionComponent<IProfileModal> = ({
+    open,
+    onClose,
+    user,
+}) => {
+    const { doProfileUpdate } = useAuthentication();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [profileFormValues, setProfileFormValues] = useState(
         INITIAL_PROFILE_FORM_VALUES,
@@ -45,20 +58,31 @@ const ProfileModal: FunctionComponent<IProfileModal> = ({ open, onClose }) => {
     const [profileFormErrors, setProfileFormErrors] = useState(
         INITIAL_PROFILE_FORM_ERRORS,
     );
+    const [formDirty, setFormDirty] = useState(INITIAL_PROFILE_FORM_DIRTY);
+
+    useEffect((): void => {
+        if (open) {
+            setProfileFormValues({
+                ...profileFormValues,
+                displayName: user?.displayName ?? '',
+                photoURL: user?.photoURL ?? '',
+            });
+        }
+    }, [open]);
 
     const resetState = useCallback((): void => {
         setIsSubmitting(false);
         setProfileFormValues(INITIAL_PROFILE_FORM_VALUES);
         setProfileFormErrors(INITIAL_PROFILE_FORM_ERRORS);
+        setFormDirty(INITIAL_PROFILE_FORM_DIRTY);
     }, [setIsSubmitting, setProfileFormErrors, setProfileFormValues]);
 
-    useEffect(() => resetState(), [open, resetState]);
+    useEffect(() => {
+        if (!open) resetState();
+    }, [open, resetState]);
 
     const doValidation = useCallback((): boolean => {
-        const displayName = validateDisplayName(
-            profileFormValues.displayName,
-            user?.displayName ?? null,
-        )
+        const displayName = validateDisplayName(profileFormValues.displayName)
             ? null
             : 'Please enter a display name';
         const photoURL = validatePhotoURL(profileFormValues.photoURL)
@@ -70,7 +94,7 @@ const ProfileModal: FunctionComponent<IProfileModal> = ({ open, onClose }) => {
             photoURL,
         });
         return displayName !== null || photoURL !== null;
-    }, [profileFormValues, profileFormErrors, setProfileFormErrors, user]);
+    }, [profileFormValues, profileFormErrors, setProfileFormErrors]);
 
     const onSubmit = useCallback(
         async (e: SyntheticEvent): Promise<void> => {
@@ -106,8 +130,12 @@ const ProfileModal: FunctionComponent<IProfileModal> = ({ open, onClose }) => {
                 ...profileFormValues,
                 [e.target.name]: e.target.value,
             });
+            setFormDirty({
+                ...formDirty,
+                [e.target.name]: true,
+            });
         },
-        [setProfileFormValues, profileFormValues],
+        [setProfileFormValues, profileFormValues, formDirty, setFormDirty],
     );
 
     const modalProps: {
@@ -125,7 +153,8 @@ const ProfileModal: FunctionComponent<IProfileModal> = ({ open, onClose }) => {
             name: 'displayName',
             value: profileFormValues.displayName,
             error: profileFormErrors.displayName,
-            placeholder: user?.displayName ?? 'Display name',
+            placeholder: 'Display name',
+            initialValue: user?.displayName ?? undefined,
         },
         {
             label: 'Photo URL',
@@ -133,7 +162,8 @@ const ProfileModal: FunctionComponent<IProfileModal> = ({ open, onClose }) => {
             name: 'photoURL',
             value: profileFormValues.photoURL,
             error: profileFormErrors.photoURL,
-            placeholder: user?.photoURL ?? 'Photo URL',
+            placeholder: 'Photo URL',
+            initialValue: user?.photoURL ?? undefined,
             helpText:
                 'Copy and paste the full link to an image found somewhere on the internet',
         },
@@ -151,6 +181,7 @@ const ProfileModal: FunctionComponent<IProfileModal> = ({ open, onClose }) => {
             onClose={onClose}
             onChange={handleChange}
             onSubmit={onSubmit}
+            formDirty={formDirty}
         />
     );
 };

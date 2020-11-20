@@ -8,14 +8,15 @@ import Container from 'react-bootstrap/Container';
 
 import { useAuthentication } from '../../context/authentication';
 import ProfileModal from './ProfileModal';
-import useWindowDimensions from './windowDimensions';
+import { useWindowDimensions } from '../../context/windowDimensions';
 
 interface IAuthLayoutProps {}
 
 const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
     const { push } = useHistory();
     const { user, doLogout } = useAuthentication();
-    const { bodyHeight, documentHeight } = useWindowDimensions();
+    const { windowDimensions } = useWindowDimensions();
+    const { bodyHeight, documentHeight } = windowDimensions;
     const [profileModalOpen, setProfileModalOpen] = useState(false);
 
     const handleLogout = useCallback(async () => {
@@ -42,7 +43,7 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                             <Nav.Link as={NavLink} to="/create">
                                 Create
                             </Nav.Link>
-                            <Nav.Link as={NavLink} to="/groups">
+                            <Nav.Link as={NavLink} to="/groups" exact>
                                 My groups
                             </Nav.Link>
                         </Nav>
@@ -73,13 +74,16 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                         <Col lg={4}>
                             <p className="text-light">
                                 Built by{' '}
-                                <a
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    href="https://gregmurray.org"
-                                >
-                                    Greg Murray
-                                </a>
+                                <strong>
+                                    <a
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        href="https://gregmurray.org"
+                                        className="text-white"
+                                    >
+                                        Greg Murray
+                                    </a>
+                                </strong>
                             </p>
                         </Col>
                         <Col lg={4}></Col>
@@ -89,6 +93,7 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
             <ProfileModal
                 open={profileModalOpen}
                 onClose={() => setProfileModalOpen(false)}
+                user={user}
             />
         </Container>
     );

@@ -12,3 +12,19 @@ export interface IParticipant {
     userId: string;
     identifier: string;
 }
+
+export class ParticipantUserDetail {
+    constructor(
+        public participant?: IParticipant,
+        public displayName?: string,
+        public photoURL?: string,
+        public email?: string,
+    ) {}
+}
+
+export interface IParticipantUserDetail {
+    participant: IParticipant;
+    displayName: string;
+    photoURL: string;
+    email: string;
+}

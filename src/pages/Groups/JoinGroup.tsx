@@ -20,6 +20,7 @@ import {
 import { Group } from '../../models/group';
 import { addParticipantToGroup } from '../../database/repositories/participantRepository';
 import PageSpinner from '../../components/PageSpinner';
+import BasicPage from '../../components/BasicPage';
 
 //#region interfaces
 interface IJoinGroup {}
@@ -88,86 +89,81 @@ const JoinGroup: FunctionComponent<IJoinGroup> = () => {
         [setIsSubmitting, setJoinError, push, user],
     );
     //#endregion
+    //#region renderHeader
+    const renderHeader = useCallback(
+        (): React.ReactNode => (
+            <>
+                <h1 className="display-4">Join Group</h1>
+                <p className="lead">
+                    Below are the groups that are available for you to join.
+                </p>
+                <p>
+                    <em>
+                        You can only join groups that you are not already in and
+                        are invited to
+                    </em>
+                </p>
+            </>
+        ),
+        [],
+    );
+    //#endregion
 
     //#region render
     return (
-        <Container fluid className="px-0">
-            <Jumbotron fluid>
-                <Container>
-                    <h1 className="display-4">Join Group</h1>
-                    <p className="lead">
-                        Below are the groups that are available for you to join.
-                    </p>
-                    <p>
-                        <em>
-                            You can only join groups that you are not already in
-                            and are invited to
-                        </em>
-                    </p>
-                </Container>
-            </Jumbotron>
-            <Container>
-                {joinError && (
-                    <Alert
-                        variant="danger"
-                        onClose={() => setJoinError(false)}
-                        dismissible
-                    >
-                        <Alert.Heading>Error</Alert.Heading>
-                        <hr />
-                        <p>There was an error trying to join the group.</p>
-                    </Alert>
-                )}
-                {groupsLoaded ? (
-                    availableGroups && availableGroups.length > 0 ? (
-                        <CardDeck>
-                            {availableGroups.map(
-                                ({
-                                    id,
-                                    name,
-                                    participants,
-                                    description,
-                                }: Group): JSX.Element => {
-                                    const participantCount =
-                                        participants?.length;
-                                    return (
-                                        <Card key={id} className="text-center">
-                                            <Card.Header>{name}</Card.Header>
-                                            <Card.Body>
-                                                <Card.Title>
-                                                    {description}
-                                                </Card.Title>
-                                                <Card.Subtitle>
-                                                    Participants:{' '}
-                                                    {participantCount}
-                                                </Card.Subtitle>
-                                            </Card.Body>
-                                            <Card.Footer>
-                                                <Button
-                                                    onClick={() =>
-                                                        handleJoinGroup(id)
-                                                    }
-                                                    disabled={isSubmitting}
-                                                >
-                                                    Join
-                                                </Button>
-                                            </Card.Footer>
-                                        </Card>
-                                    );
-                                },
-                            )}
-                        </CardDeck>
-                    ) : (
-                        <h1 className="display-5 text-center">
-                            No available groups. You can create one, or ask a
-                            friend to invite you!
-                        </h1>
-                    )
+        <BasicPage
+            showAlert={joinError}
+            onAlertClose={() => setJoinError(false)}
+            alertText="There was an error trying to join the group."
+            renderHeader={renderHeader()}
+        >
+            {groupsLoaded ? (
+                availableGroups && availableGroups.length > 0 ? (
+                    <CardDeck>
+                        {availableGroups.map(
+                            ({
+                                id,
+                                name,
+                                participants,
+                                description,
+                            }: Group): JSX.Element => {
+                                const participantCount = participants?.length;
+                                return (
+                                    <Card key={id} className="text-center">
+                                        <Card.Header>{name}</Card.Header>
+                                        <Card.Body>
+                                            <Card.Title>
+                                                {description}
+                                            </Card.Title>
+                                            <Card.Subtitle>
+                                                Participants: {participantCount}
+                                            </Card.Subtitle>
+                                        </Card.Body>
+                                        <Card.Footer>
+                                            <Button
+                                                onClick={() =>
+                                                    handleJoinGroup(id)
+                                                }
+                                                disabled={isSubmitting}
+                                            >
+                                                Join
+                                            </Button>
+                                        </Card.Footer>
+                                    </Card>
+                                );
+                            },
+                        )}
+                    </CardDeck>
                 ) : (
-                    <PageSpinner />
-                )}
-            </Container>
-        </Container>
+                    <h1 className="display-5 text-center">
+                        No available groups. You can create one, or ask a friend
+                        to invite you!
+                    </h1>
+                )
+            ) : (
+                <PageSpinner />
+            )}
+        </BasicPage>
     );
     //#endregion
 };

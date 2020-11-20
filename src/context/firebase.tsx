@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 import 'firebase/auth';
@@ -13,6 +13,9 @@ const firebaseConfig = {
     appId: process.env.REACT_APP_APP_ID,
 };
 
+export const defaultPhotoURL =
+    'https://st.depositphotos.com/1779253/5140/v/600/depositphotos_51405259-stock-illustration-male-avatar-profile-picture-use.jpg';
+
 firebase.initializeApp(firebaseConfig);
 
 export const db = firebase.firestore();
@@ -20,10 +23,6 @@ export const db = firebase.firestore();
 type TrackingProviderProps = {
     children: React.ReactNode;
 };
-
-type CollectionType = firebase.firestore.CollectionReference<
-    firebase.firestore.DocumentData
->;
 
 type createUserOnFirebaseType = (
     email: string,
@@ -33,7 +32,8 @@ type doUserLoginOnFirebaseType = (
     email: string,
     password: string,
 ) => Promise<void>;
-type createOrLoginThroughGoogleType = (create: boolean) => Promise<void>;
+type loginThroughGoogleType = () => Promise<void>;
+type createThroughGoogleType = () => Promise<void>;
 type logoutUserFromFirebaseType = () => Promise<void>;
 type getUserAccessType = (userId: string) => Promise<boolean>;
 
@@ -41,10 +41,10 @@ type FirebaseState = {
     user: firebase.User | null;
     isFetchingUser: boolean;
     hasAccess: boolean;
-    getUserAccess: getUserAccessType;
     createUserOnFirebase: createUserOnFirebaseType;
     doUserLoginOnFirebase: doUserLoginOnFirebaseType;
-    createOrLoginThroughGoogle: createOrLoginThroughGoogleType;
+    loginThroughGoogle: loginThroughGoogleType;
+    createThroughGoogle: createThroughGoogleType;
     logoutUserFromFirebase: logoutUserFromFirebaseType;
 };
 
@@ -58,19 +58,23 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
     const [user, setUser] = useState<firebase.User | null>(null);
     const [isFetchingUser, setIsFetchingUser] = useState(true);
     const [hasAccess, setHasAccess] = useState(false);
+    const [isFetchingAccess, setIsFetchingAccess] = useState(true);
 
     auth.onAuthStateChanged(async user => {
         if (user) {
             setUser(user);
-            const userAccess = await getUserAccess(user.uid);
-            setHasAccess(userAccess);
+            const allow = await getUserAccess(user.uid);
+            setHasAccess(allow);
+            setIsFetchingAccess(false);
         } else {
             setUser(null);
-            setHasAccess(false);
+            setIsFetchingAccess(false);
         }
-
-        setIsFetchingUser(false);
     });
+
+    useEffect(() => {
+        if (!isFetchingAccess) setIsFetchingUser(false);
+    }, [isFetchingAccess]);
 
     const createUserOnFirebase: createUserOnFirebaseType = (email, password) =>
         new Promise(async (resolve, reject) => {
@@ -87,6 +91,8 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
 
                 await usersCollection.doc(firebaseUser.user.uid).set({
                     email: firebaseUser.user.email,
+                    displayName: firebaseUser.user.email,
+                    photoURL: defaultPhotoURL,
                 });
 
                 resolve();
@@ -111,7 +117,7 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
 
     const logoutUserFromFirebase = async () => await auth.signOut();
 
-    const createOrLoginThroughGoogle: createOrLoginThroughGoogleType = create =>
+    const loginThroughGoogle: loginThroughGoogleType = () =>
         new Promise(async (resolve, reject) => {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
@@ -124,11 +130,30 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                     return;
                 }
 
-                if (create) {
-                    await usersCollection.doc(firebaseUser.user.uid).set({
-                        email: firebaseUser.user.email,
-                    });
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        });
+
+    const createThroughGoogle: createThroughGoogleType = () =>
+        new Promise(async (resolve, reject) => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                const firebaseUser = await firebase
+                    .auth()
+                    .signInWithPopup(provider);
+
+                if (!firebaseUser.user) {
+                    reject();
+                    return;
                 }
+
+                await usersCollection.doc(firebaseUser.user.uid).set({
+                    email: firebaseUser.user.email,
+                    displayName: firebaseUser.user.email,
+                    photoURL: defaultPhotoURL,
+                });
 
                 resolve();
             } catch (err) {
@@ -168,8 +193,8 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                 createUserOnFirebase,
                 doUserLoginOnFirebase,
                 logoutUserFromFirebase,
-                createOrLoginThroughGoogle,
-                getUserAccess,
+                loginThroughGoogle,
+                createThroughGoogle,
                 user,
                 isFetchingUser,
                 hasAccess,

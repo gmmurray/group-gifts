@@ -30,6 +30,20 @@ export const getParticipants = async (groupId: string) => {
     return retrievedParticipants;
 };
 
+export const checkGroupMembership = async (
+    groupId: string,
+    userId: string,
+): Promise<boolean> => {
+    const snapshot = await participantContext(groupId)
+        .where('userId', '==', userId)
+        .withConverter(participantConverter)
+        .get();
+    const retrievedParticipants = new Array<Participant>();
+    snapshot.forEach(p => retrievedParticipants.push(p.data()));
+
+    return retrievedParticipants.length > 0;
+};
+
 export const deleteParticipantFromGroup = async (
     groupId: string,
     userId: string,

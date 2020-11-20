@@ -32,7 +32,7 @@ const INITIAL_REGISTER_FORM_ERRORS: {
 
 export const Register = () => {
     const { push } = useHistory();
-    const { doRegister, doGoogleLoginOrRegister } = useAuthentication();
+    const { doRegister, doGoogleRegister } = useAuthentication();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [registerFormValues, setFormValues] = useState(
         INITIAL_REGISTER_FORM_VALUES,
@@ -94,7 +94,7 @@ export const Register = () => {
     const handleGoogleRegister = async () => {
         try {
             setIsSubmitting(true);
-            await doGoogleLoginOrRegister(true);
+            await doGoogleRegister();
             push('/');
         } catch (err) {
             setIsSubmitting(false);
