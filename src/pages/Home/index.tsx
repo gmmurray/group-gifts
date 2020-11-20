@@ -6,6 +6,7 @@ import Button from 'react-bootstrap/Button';
 
 import { Link } from 'react-router-dom';
 
+import GroupGiftLogo from '../../assets/images/group-gift-logo.png';
 import './styles.scss';
 
 export const Home = () => {
@@ -17,7 +18,7 @@ export const Home = () => {
                 className="position-relative overflow-hidden p-md-5 text-center bg-light"
             >
                 <Col md={5} className="p-lg-5 mx-auto my-5">
-                    <h1 className="display-4 font-weight-normal">Group Gift</h1>
+                    <img src={GroupGiftLogo} alt="Group Gift Logo" />
                     <p className="lead font-weight-normal">
                         The best way to plan wish lists for any gift-buying
                         event
