@@ -563,7 +563,7 @@ const Group: FunctionComponent<IGroupsProps> = ({
                     </Button>
                     <OverlayTrigger
                         trigger="click"
-                        placement="right"
+                        placement="auto"
                         overlay={HelpPopover}
                     >
                         <Button variant="primary">

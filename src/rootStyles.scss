@@ -1,9 +1,11 @@
+$group-gift-primary-color: #28284e;
+
 .bg-dark-blue {
-    background-color: #28284e;
+    background-color: $group-gift-primary-color;
 }
 
 $theme-colors: (
-    'primary': #28284e,
+    'primary': $group-gift-primary-color,
     'warning': #ff7900,
 );
 
