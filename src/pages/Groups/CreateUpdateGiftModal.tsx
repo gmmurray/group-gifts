@@ -5,7 +5,6 @@ import React, {
     useEffect,
     useState,
 } from 'react';
-import { useHistory } from 'react-router-dom';
 import ModalForm, {
     LoadingActionButtonType,
     TextInputType,
@@ -87,7 +86,6 @@ const CreateUpdateGiftModal: FunctionComponent<CreateUpdateGiftModalType> = ({
 }) => {
     //#region context
     const { user } = useAuthentication();
-    const { push } = useHistory();
     //#endregion
 
     //#region state
@@ -126,6 +124,7 @@ const CreateUpdateGiftModal: FunctionComponent<CreateUpdateGiftModalType> = ({
             }
         };
         if (open && isUpdating) getGiftData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     useEffect((): void => {

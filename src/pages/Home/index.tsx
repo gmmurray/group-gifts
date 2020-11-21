@@ -28,7 +28,7 @@ export const Home = () => {
                 <Row noGutters className="w-100 text-center">
                     <Col
                         lg={4}
-                        className="w-100 bg-primary border border-white  text-light home-column"
+                        className="w-100 bg-primary border border-white text-light home-column"
                     >
                         <Container className="my-3 py-3">
                             <h1 className="display-5">

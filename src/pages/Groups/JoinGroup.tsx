@@ -5,12 +5,9 @@ import React, {
     useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
-import Container from 'react-bootstrap/Container';
-import Jumbotron from 'react-bootstrap/Jumbotron';
 import CardDeck from 'react-bootstrap/CardDeck';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
-import Alert from 'react-bootstrap/Alert';
 
 import { useAuthentication } from '../../context/authentication';
 import {

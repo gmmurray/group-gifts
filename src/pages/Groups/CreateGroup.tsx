@@ -1,5 +1,4 @@
 import React, {
-    FormEvent,
     FunctionComponent,
     SyntheticEvent,
     useCallback,
@@ -8,13 +7,9 @@ import React, {
 } from 'react';
 import { useHistory } from 'react-router-dom';
 import Container from 'react-bootstrap/Container';
-import Jumbotron from 'react-bootstrap/Jumbotron';
-import Alert from 'react-bootstrap/Alert';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
-import Col from 'react-bootstrap/Col';
-import Row from 'react-bootstrap/Row';
 
 import { useAuthentication } from '../../context/authentication';
 import { getUserDetailItems } from '../../database/repositories/userDetailRepository';
