@@ -1,6 +1,6 @@
 import { firestore } from 'firebase';
 import { Gift } from '../../models/gift';
-import { Group, IGroup, IGroupUpdate, ViewGroup } from '../../models/group';
+import { Group, IGroup, IGroupUpdate } from '../../models/group';
 import { Participant } from '../../models/participant';
 import { fireDb } from '../db';
 import { deleteGiftFromGroup, getGifts, getUserGifts } from './giftRepository';

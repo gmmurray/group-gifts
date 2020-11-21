@@ -126,6 +126,7 @@ const Group: FunctionComponent<IGroupsProps> = ({
         };
 
         getGroupData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -142,6 +143,7 @@ const Group: FunctionComponent<IGroupsProps> = ({
             )
                 push('/join');
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, groupLoaded, userGroup]);
     //#endregion
 

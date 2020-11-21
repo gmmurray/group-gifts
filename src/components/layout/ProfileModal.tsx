@@ -68,6 +68,7 @@ const ProfileModal: FunctionComponent<IProfileModal> = ({
                 photoURL: user?.photoURL ?? '',
             });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     const resetState = useCallback((): void => {

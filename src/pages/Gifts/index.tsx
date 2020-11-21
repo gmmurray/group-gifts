@@ -82,6 +82,7 @@ const Gifts: FunctionComponent<GiftsPropsType> = ({
                 error: 'Error loading gifts',
             });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     //#region effects
@@ -94,6 +95,7 @@ const Gifts: FunctionComponent<GiftsPropsType> = ({
                 push('/groups');
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect((): void => {

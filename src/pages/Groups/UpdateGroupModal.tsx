@@ -146,6 +146,7 @@ const UpdateGroupModal: FunctionComponent<UpdateGroupModalType> = ({
             }
         };
         if (open) getUserDetailData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     useEffect((): void => {

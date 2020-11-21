@@ -5,11 +5,8 @@ import React, {
     useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
-import Container from 'react-bootstrap/Container';
-import Jumbotron from 'react-bootstrap/Jumbotron';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
-import Alert from 'react-bootstrap/Alert';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import Row from 'react-bootstrap/Row';
