@@ -136,7 +136,10 @@ export const Register = () => {
             onGoogleClick={handleGoogleRegister}
             renderFooter={
                 <>
-                    Already have an account? <Link to="/login">Login here</Link>
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-success">
+                        Login here
+                    </Link>
                 </>
             }
         />

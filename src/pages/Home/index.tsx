@@ -20,8 +20,7 @@ export const Home = () => {
                 <Col md={5} className="p-lg-5 mx-auto my-5">
                     <img src={GroupGiftLogo} alt="Group Gift Logo" />
                     <p className="lead font-weight-normal">
-                        The best way to plan wish lists for any gift-buying
-                        event
+                        Share your wish list with a group
                     </p>
                 </Col>
             </Container>

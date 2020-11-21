@@ -118,7 +118,9 @@ export const Login = () => {
             renderFooter={
                 <>
                     Don't have an account?{' '}
-                    <Link to="/register">Register here</Link>
+                    <Link to="/register" className="text-success">
+                        Register here
+                    </Link>
                 </>
             }
         />
