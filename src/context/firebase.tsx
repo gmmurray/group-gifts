@@ -130,6 +130,18 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                     return;
                 }
 
+                const userExists = await usersCollection
+                    .doc(firebaseUser.user.uid)
+                    .get();
+
+                if (!userExists.exists) {
+                    await usersCollection.doc(firebaseUser.user.uid).set({
+                        email: firebaseUser.user.email,
+                        displayName: firebaseUser.user.email,
+                        photoURL: defaultPhotoURL,
+                    });
+                }
+
                 resolve();
             } catch (err) {
                 reject(err);
