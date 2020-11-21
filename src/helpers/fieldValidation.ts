@@ -21,6 +21,9 @@ export const validateGroupCode = (input: string | null): boolean =>
 export const validateRequiredField = (input: string | null): boolean =>
     isNotNullOrEmpty(input);
 
+export const validateEmptyStringField = (input: string): boolean =>
+    input.length === 0 && input === '';
+
 export const isValidURL = (url: string): boolean =>
     url.match(
         // eslint-disable-next-line no-useless-escape

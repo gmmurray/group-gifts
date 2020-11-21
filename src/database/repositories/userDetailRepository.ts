@@ -1,5 +1,6 @@
 import { firestore } from 'firebase';
 import { IUserDetail, UserDetail } from '../../models/userDetail';
+import { pageDirectionType } from '../../shared/defaultTypes';
 import { fireDb } from '../db';
 
 export const userDetailContext = fireDb.collection('users');
@@ -25,6 +26,60 @@ export const getUserDetailItems = async (
     });
 
     return retrievedUserDetails;
+};
+
+export const getPaginatedUserDetails = async (
+    dir: pageDirectionType,
+    orderBy: string,
+    page: number,
+    reference: string | null,
+): Promise<Array<UserDetail>> => {
+    const retrievedUsers = new Array<UserDetail>();
+
+    // get first page
+    if (reference === null) {
+        const snapshot = await userDetailContext
+            .withConverter(userDetailConverter)
+            .limit(page)
+            .get();
+        snapshot.forEach(u => retrievedUsers.push(new UserDetail(u.data())));
+    } else {
+        if (dir === 'next') {
+            userDetailContext
+                .doc(reference)
+                .get()
+                .then(async doc => {
+                    const snapshot = await userDetailContext
+                        .orderBy(orderBy)
+                        .startAfter(doc)
+                        .limit(page)
+                        .withConverter(userDetailConverter)
+                        .get();
+
+                    snapshot.forEach(u =>
+                        retrievedUsers.push(new UserDetail(u.data())),
+                    );
+                });
+        } else {
+            userDetailContext
+                .doc(reference)
+                .get()
+                .then(async doc => {
+                    const snapshot = await userDetailContext
+                        .orderBy(orderBy)
+                        .endBefore(doc)
+                        .limit(page)
+                        .withConverter(userDetailConverter)
+                        .get();
+
+                    snapshot.forEach(u =>
+                        retrievedUsers.push(new UserDetail(u.data())),
+                    );
+                });
+        }
+    }
+
+    return retrievedUsers;
 };
 
 export const getUserDetailItemsFromList = async (
@@ -74,6 +129,7 @@ export const userDetailConverter = {
             id: udSnapshot.id,
             email: data.email,
             allow: data.allow,
+            admin: data.admin,
             displayName: data.displayName,
             photoURL: data.photoURL,
         });

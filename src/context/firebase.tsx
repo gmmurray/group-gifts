@@ -35,12 +35,16 @@ type doUserLoginOnFirebaseType = (
 type loginThroughGoogleType = () => Promise<void>;
 type createThroughGoogleType = () => Promise<void>;
 type logoutUserFromFirebaseType = () => Promise<void>;
-type getUserAccessType = (userId: string) => Promise<boolean>;
+export type userPermissionType = { allow: boolean; admin: boolean };
+export type getUserPermissionType = (
+    userId: string,
+) => Promise<userPermissionType>;
 
 type FirebaseState = {
     user: firebase.User | null;
     isFetchingUser: boolean;
-    hasAccess: boolean;
+    userPermission: userPermissionType;
+    getUserPermission: getUserPermissionType;
     createUserOnFirebase: createUserOnFirebaseType;
     doUserLoginOnFirebase: doUserLoginOnFirebaseType;
     loginThroughGoogle: loginThroughGoogleType;
@@ -57,14 +61,17 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
     // AUTHENTICATION
     const [user, setUser] = useState<firebase.User | null>(null);
     const [isFetchingUser, setIsFetchingUser] = useState(true);
-    const [hasAccess, setHasAccess] = useState(false);
+    const [userPermission, setUserPermission] = useState({
+        allow: false,
+        admin: false,
+    });
     const [isFetchingAccess, setIsFetchingAccess] = useState(true);
 
     auth.onAuthStateChanged(async user => {
         if (user) {
             setUser(user);
-            const allow = await getUserAccess(user.uid);
-            setHasAccess(allow);
+            const userPermissions = await getUserPermission(user.uid);
+            setUserPermission(userPermissions);
             setIsFetchingAccess(false);
         } else {
             setUser(null);
@@ -173,7 +180,7 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
             }
         });
 
-    const getUserAccess: getUserAccessType = userId =>
+    const getUserPermission: getUserPermissionType = userId =>
         new Promise(async (resolve, reject) => {
             try {
                 const userDoc = await usersCollection.doc(userId).get();
@@ -184,12 +191,18 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                 }
 
                 const data = userDoc.data();
-                resolve(
-                    data &&
-                        (data?.allow ?? false) &&
-                        data.allow !== undefined &&
-                        data.allow,
-                );
+                if (data) {
+                    resolve({
+                        allow:
+                            (data?.allow ?? false) &&
+                            data.allow !== undefined &&
+                            data.allow,
+                        admin:
+                            (data?.admin ?? false) &&
+                            data.admin !== undefined &&
+                            data.admin,
+                    });
+                } else resolve({ allow: false, admin: false });
                 return;
             } catch (error) {
                 reject(error);
@@ -209,7 +222,8 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                 createThroughGoogle,
                 user,
                 isFetchingUser,
-                hasAccess,
+                userPermission,
+                getUserPermission,
             }}
         >
             {children}

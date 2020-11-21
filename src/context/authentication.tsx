@@ -1,6 +1,10 @@
 import React, { createContext, ReactNode, useContext } from 'react';
 import { updateUserDetail } from '../database/repositories/userDetailRepository';
-import { useFirebase } from './firebase';
+import {
+    getUserPermissionType,
+    useFirebase,
+    userPermissionType,
+} from './firebase';
 
 type doLoginType = (email: string, password: string) => Promise<void>;
 type doRegisterType = (email: string, password: string) => Promise<void>;
@@ -17,7 +21,8 @@ type doProfileUpdateType = (updates: updateType) => Promise<void>;
 type AuthenticationContextState = {
     isLogged: boolean;
     isFetchingUser: boolean;
-    hasAccess: boolean;
+    userPermission: userPermissionType;
+    getUserPermission: getUserPermissionType;
     user: firebase.User | null;
     doLogin: doLoginType;
     doRegister: doRegisterType;
@@ -42,7 +47,8 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
         logoutUserFromFirebase,
         createThroughGoogle,
         loginThroughGoogle,
-        hasAccess,
+        userPermission,
+        getUserPermission,
         user,
         isFetchingUser,
     } = useFirebase();
@@ -119,7 +125,8 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
                 doGoogleRegister,
                 doLogout,
                 doProfileUpdate,
-                hasAccess,
+                userPermission,
+                getUserPermission,
             }}
         >
             {children}
