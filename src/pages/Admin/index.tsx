@@ -7,6 +7,7 @@ import React, {
 import { Link, useHistory } from 'react-router-dom';
 import BasicPage from '../../components/BasicPage';
 import PageSpinner from '../../components/PageSpinner';
+import SpinnerButton from '../../components/SpinnerButton';
 import { useAuthentication } from '../../context/authentication';
 import { getPaginatedUserDetails } from '../../database/repositories/userDetailRepository';
 import { UserDetail } from '../../models/userDetail';
@@ -93,6 +94,7 @@ const Admin: FunctionComponent<AdminType> = () => {
                         first: result[0],
                         last: result[result.length - 1],
                     }));
+                    setUsersLoading(state => ({ ...state, loading: false }));
                 }
             } catch (error) {
                 console.log(error);
@@ -132,7 +134,20 @@ const Admin: FunctionComponent<AdminType> = () => {
         >
             {userPermissionLoaded.loaded ? (
                 userPermission.admin && userPermission.allow ? (
-                    <div>hi</div>
+                    <>
+                        <h1 className="display-5">Manage users</h1>
+                        <SpinnerButton
+                            loading={usersLoading.loading}
+                            loadingText="Loading..."
+                            staticText="Load users"
+                            buttonProps={{
+                                type: 'button',
+                                disabled: usersLoading.loading,
+                                variant: 'primary',
+                                onClick: () => handleGetUserData('next', null),
+                            }}
+                        />
+                    </>
                 ) : (
                     <h1 className="display-5 text-center">
                         You do not have access to view this page. Click{' '}

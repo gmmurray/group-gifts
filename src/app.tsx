@@ -13,7 +13,12 @@ export const App = () => {
     const { isFetchingUser, isLogged, userPermission } = useAuthentication();
     if (isFetchingUser) return <PageSpinner />;
     else if (!isLogged) return <UnauthenticatedApp />;
-    else return userPermission.allow ? <AuthenticatedApp /> : <Unauthorized />;
+    else
+        return userPermission && userPermission.allow ? (
+            <AuthenticatedApp />
+        ) : (
+            <Unauthorized />
+        );
 };
 
 const AuthenticatedApp = () => {
@@ -62,6 +67,9 @@ const UnauthenticatedApp = () => {
             </Route>
             <Route exact path="/register">
                 <Register />
+            </Route>
+            <Route path="/">
+                <Redirect to="/login" />
             </Route>
         </Switch>
     );
