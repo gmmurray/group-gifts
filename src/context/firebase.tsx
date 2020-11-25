@@ -67,17 +67,21 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
     });
     const [isFetchingAccess, setIsFetchingAccess] = useState(true);
 
-    auth.onAuthStateChanged(async user => {
-        if (user) {
-            setUser(user);
-            const userPermissions = await getUserPermission(user.uid);
-            setUserPermission(userPermissions);
-            setIsFetchingAccess(false);
-        } else {
-            setUser(null);
-            setIsFetchingAccess(false);
-        }
-    });
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async user => {
+            if (user) {
+                setUser(user);
+                const userPermissions = await getUserPermission(user.uid);
+                setUserPermission(userPermissions);
+                setIsFetchingAccess(false);
+            } else {
+                setUser(null);
+                setIsFetchingAccess(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         if (!isFetchingAccess) setIsFetchingUser(false);

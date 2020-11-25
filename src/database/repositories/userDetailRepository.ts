@@ -33,53 +33,105 @@ export const getPaginatedUserDetails = async (
     orderBy: string,
     page: number,
     reference: string | null,
-): Promise<Array<UserDetail>> => {
+    callback: Function,
+): Promise<Array<UserDetail> | void> => {
     const retrievedUsers = new Array<UserDetail>();
 
     // get first page
-    if (reference === null) {
-        const snapshot = await userDetailContext
-            .withConverter(userDetailConverter)
-            .limit(page)
-            .get();
-        snapshot.forEach(u => retrievedUsers.push(new UserDetail(u.data())));
-    } else {
-        if (dir === 'next') {
-            userDetailContext
-                .doc(reference)
-                .get()
-                .then(async doc => {
-                    const snapshot = await userDetailContext
-                        .orderBy(orderBy)
-                        .startAfter(doc)
-                        .limit(page)
+    // if (reference === null) {
+    //     const snapshot = await userDetailContext
+    //         .withConverter(userDetailConverter)
+    //         .orderBy(orderBy)
+    //         .limit(page)
+    //         .get();
+    //     snapshot.forEach(u => retrievedUsers.push(new UserDetail(u.data())));
+    // } else {
+    //     if (dir === 'next') {
+    userDetailContext
+        .withConverter(userDetailConverter)
+        .orderBy(orderBy)
+        .limit(page)
+        .get()
+        .then((snapshot: firestore.QuerySnapshot<UserDetail>) => {
+            if (dir === null && reference === null) {
+                snapshot.forEach(u =>
+                    retrievedUsers.push(new UserDetail(u.data())),
+                );
+                callback(retrievedUsers);
+            } else {
+                // let query = userDetailContext
+                //     .withConverter(userDetailConverter)
+                //     .orderBy(orderBy);
+                if (dir === 'next') {
+                    userDetailContext
                         .withConverter(userDetailConverter)
-                        .get();
-
-                    snapshot.forEach(u =>
-                        retrievedUsers.push(new UserDetail(u.data())),
-                    );
-                });
-        } else {
-            userDetailContext
-                .doc(reference)
-                .get()
-                .then(async doc => {
-                    const snapshot = await userDetailContext
                         .orderBy(orderBy)
-                        .endBefore(doc)
+                        .startAfter(reference)
                         .limit(page)
+                        .get()
+                        .then(nextPage => {
+                            nextPage.forEach(u =>
+                                retrievedUsers.push(new UserDetail(u.data())),
+                            );
+                            callback(retrievedUsers);
+                        });
+                } else if (dir === 'prev') {
+                    userDetailContext
                         .withConverter(userDetailConverter)
-                        .get();
+                        .orderBy(orderBy)
+                        .endBefore(reference)
+                        .limit(page)
+                        .get()
+                        .then(nextPage => {
+                            nextPage.forEach(u =>
+                                retrievedUsers.push(new UserDetail(u.data())),
+                            );
+                            callback(retrievedUsers);
+                        });
+                }
+                // query
+                //     .limit(page)
+                //     .get()
+                //     .then(nextPage => {
+                //         nextPage.forEach(u =>
+                //             retrievedUsers.push(new UserDetail(u.data())),
+                //         );
+                //     });
+            }
+        });
+    // let last = userDetailContext.doc(reference);
+    // userDetailContext
+    //     .orderBy(orderBy)
+    //     .startAfter(last)
+    //     .limit(page)
+    //     .withConverter(userDetailConverter)
+    //     .get()
+    //     .then(snapshot => {
+    //         snapshot.forEach(u =>
+    //             retrievedUsers.push(new UserDetail(u.data())),
+    //         );
+    //     });
+    // callback(retrievedUsers);
+    //     } else {
+    //         userDetailContext
+    //             .doc(reference)
+    //             .get()
+    //             .then(async doc => {
+    //                 const snapshot = await userDetailContext
+    //                     .orderBy(orderBy)
+    //                     .endBefore(doc)
+    //                     .limit(page)
+    //                     .withConverter(userDetailConverter)
+    //                     .get();
 
-                    snapshot.forEach(u =>
-                        retrievedUsers.push(new UserDetail(u.data())),
-                    );
-                });
-        }
-    }
+    //                 snapshot.forEach(u =>
+    //                     retrievedUsers.push(new UserDetail(u.data())),
+    //                 );
+    //             });
+    //     }
+    // }
 
-    return retrievedUsers;
+    //return retrievedUsers;
 };
 
 export const getUserDetailItemsFromList = async (

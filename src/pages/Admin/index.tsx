@@ -19,7 +19,7 @@ import {
 } from '../../shared/defaultTypes';
 
 //#region constants
-const ELEMENTS_PER_PAGE = 1;
+const ELEMENTS_PER_PAGE = 3;
 //#endregion
 
 //#region types
@@ -80,22 +80,43 @@ const Admin: FunctionComponent<AdminType> = () => {
         ): Promise<void> => {
             setUsersLoading(state => ({ ...state, loading: true }));
             try {
-                const result = await getPaginatedUserDetails(
+                getPaginatedUserDetails(
                     dir,
                     'email',
                     ELEMENTS_PER_PAGE,
                     reference,
+                    (result: any) => {
+                        if (result) {
+                            let onLastPage: boolean;
+                            if (result.length > 0) {
+                                setUsers(result);
+                                onLastPage = false;
+                            } else onLastPage = true;
+
+                            setPagingState(state => {
+                                let page;
+                                if (onLastPage) page = state.page;
+                                else if (dir === 'next') page = state.page + 1;
+                                else if (dir === 'prev') page = state.page - 1;
+                                else page = 1;
+
+                                return {
+                                    ...state,
+                                    page,
+                                    first: result[0]?.email ?? null,
+                                    last:
+                                        result[result.length - 1]?.email ??
+                                        null,
+                                    prevRef: onLastPage ? state.first : null,
+                                };
+                            });
+                            setUsersLoading(state => ({
+                                ...state,
+                                loading: false,
+                            }));
+                        }
+                    },
                 );
-                if (result !== null) {
-                    setUsers(result);
-                    setPagingState(state => ({
-                        ...state,
-                        page: dir === 'next' ? state.page + 1 : state.page - 1,
-                        first: result[0],
-                        last: result[result.length - 1],
-                    }));
-                    setUsersLoading(state => ({ ...state, loading: false }));
-                }
             } catch (error) {
                 console.log(error);
                 setUsersLoading(state => ({
@@ -144,7 +165,56 @@ const Admin: FunctionComponent<AdminType> = () => {
                                 type: 'button',
                                 disabled: usersLoading.loading,
                                 variant: 'primary',
-                                onClick: () => handleGetUserData('next', null),
+                                onClick: () => handleGetUserData(null, null),
+                            }}
+                        />
+                        {usersLoading.loading ? (
+                            <PageSpinner />
+                        ) : (
+                            <div>
+                                <div style={{ minHeight: '300px' }}>
+                                    {users.map(u => (
+                                        <div>{u.id}</div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <SpinnerButton
+                            loading={usersLoading.loading}
+                            loadingText="Loading..."
+                            staticText="Next Page"
+                            buttonProps={{
+                                type: 'button',
+                                disabled:
+                                    usersLoading.loading ||
+                                    (users &&
+                                        users.length > 0 &&
+                                        users.length < ELEMENTS_PER_PAGE) ||
+                                    pagingState.prevRef !== null ||
+                                    pagingState.page === 0,
+                                variant: 'primary',
+                                onClick: () =>
+                                    handleGetUserData('next', pagingState.last),
+                            }}
+                        />
+                        <div>{pagingState.page}</div>
+                        <SpinnerButton
+                            loading={usersLoading.loading}
+                            loadingText="Loading..."
+                            staticText="Prev Page"
+                            buttonProps={{
+                                type: 'button',
+                                disabled:
+                                    usersLoading.loading ||
+                                    pagingState.page <= 1,
+                                variant: 'primary',
+                                onClick: () =>
+                                    handleGetUserData(
+                                        'prev',
+                                        pagingState.first ||
+                                            pagingState.prevRef,
+                                    ),
                             }}
                         />
                     </>

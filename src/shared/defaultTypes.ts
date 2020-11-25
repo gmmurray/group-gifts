@@ -10,7 +10,7 @@ export const DEFAULT_LOADING_STATE: defaultLoadingType = {
     error: null,
 };
 
-export type pageDirectionType = 'next' | 'prev';
+export type pageDirectionType = 'next' | 'prev' | null;
 
 export type pagedType = {
     dir: pageDirectionType;
@@ -19,7 +19,7 @@ export type pagedType = {
     reference: string | null;
 };
 export const DEFAULT_PAGED_STATE: pagedType = {
-    dir: 'next',
+    dir: null,
     orderBy: 'id',
     page: 6,
     reference: null,
@@ -27,11 +27,13 @@ export const DEFAULT_PAGED_STATE: pagedType = {
 
 export type pageStateType = {
     page: number;
-    next: string | null;
-    prev: string | null;
+    first: string | null;
+    last: string | null;
+    prevRef: string | null;
 };
 export const DEFAULT_PAGE_STATE: pageStateType = {
     page: 0,
-    next: null,
-    prev: null,
+    first: null,
+    last: null,
+    prevRef: null,
 };
