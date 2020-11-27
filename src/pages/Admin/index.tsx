@@ -5,11 +5,16 @@ import React, {
     useState,
 } from 'react';
 import { Link, useHistory } from 'react-router-dom';
+import Table from 'react-bootstrap/Table';
+
 import BasicPage from '../../components/BasicPage';
 import PageSpinner from '../../components/PageSpinner';
 import SpinnerButton from '../../components/SpinnerButton';
 import { useAuthentication } from '../../context/authentication';
-import { getPaginatedUserDetails } from '../../database/repositories/userDetailRepository';
+import {
+    getPaginatedUserDetails,
+    updateSingleUserDetail,
+} from '../../database/repositories/userDetailRepository';
 import { UserDetail } from '../../models/userDetail';
 import {
     DEFAULT_LOADING_STATE,
@@ -17,6 +22,8 @@ import {
     pageDirectionType,
     DEFAULT_PAGE_STATE,
 } from '../../shared/defaultTypes';
+import ButtonGroup from 'react-bootstrap/esm/ButtonGroup';
+import Button from 'react-bootstrap/esm/Button';
 
 //#region constants
 const ELEMENTS_PER_PAGE = 3;
@@ -144,8 +151,30 @@ const Admin: FunctionComponent<AdminType> = () => {
         ),
         [],
     );
+
+    const updateDetail = useCallback(
+        async (
+            userId,
+            { key, value }: { key: keyof UserDetail; value: any },
+        ): Promise<void> => {
+            try {
+                updateSingleUserDetail(userId, { key, value }).then(() =>
+                    handleGetUserData(null, null),
+                );
+            } catch (error) {
+                console.log(error);
+                setUsersLoading(state => ({
+                    ...state,
+                    loading: false,
+                    error: 'Error updating user',
+                }));
+            }
+        },
+        [],
+    );
     //#endregion
     const alertText = userPermissionLoaded.error || usersLoading.error;
+    const showUsers = user && users.length > 0;
     return (
         <BasicPage
             showAlert={!!alertText}
@@ -157,66 +186,158 @@ const Admin: FunctionComponent<AdminType> = () => {
                 userPermission.admin && userPermission.allow ? (
                     <>
                         <h1 className="display-5">Manage users</h1>
-                        <SpinnerButton
-                            loading={usersLoading.loading}
-                            loadingText="Loading..."
-                            staticText="Load users"
-                            buttonProps={{
-                                type: 'button',
-                                disabled: usersLoading.loading,
-                                variant: 'primary',
-                                onClick: () => handleGetUserData(null, null),
-                            }}
-                        />
-                        {usersLoading.loading ? (
-                            <PageSpinner />
-                        ) : (
-                            <div>
-                                <div style={{ minHeight: '300px' }}>
-                                    {users.map(u => (
-                                        <div>{u.id}</div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <SpinnerButton
-                            loading={usersLoading.loading}
-                            loadingText="Loading..."
-                            staticText="Next Page"
-                            buttonProps={{
-                                type: 'button',
-                                disabled:
+                        <ButtonGroup>
+                            <SpinnerButton
+                                loading={usersLoading.loading}
+                                loadingText="Loading..."
+                                staticText="Load users"
+                                buttonProps={{
+                                    type: 'button',
+                                    disabled: usersLoading.loading,
+                                    variant: 'primary',
+                                    onClick: () =>
+                                        handleGetUserData(null, null),
+                                }}
+                            />
+                            <Button
+                                disabled={
+                                    usersLoading.loading ||
+                                    pagingState.page <= 1
+                                }
+                                variant="primary"
+                                onClick={() =>
+                                    handleGetUserData(
+                                        'prev',
+                                        pagingState.first ||
+                                            pagingState.prevRef,
+                                    )
+                                }
+                            >
+                                Prev Page
+                            </Button>
+                            <Button disabled={!showUsers}>
+                                {pagingState.page}
+                            </Button>
+                            <Button
+                                disabled={
                                     usersLoading.loading ||
                                     (users &&
                                         users.length > 0 &&
                                         users.length < ELEMENTS_PER_PAGE) ||
                                     pagingState.prevRef !== null ||
-                                    pagingState.page === 0,
-                                variant: 'primary',
-                                onClick: () =>
-                                    handleGetUserData('next', pagingState.last),
-                            }}
-                        />
-                        <div>{pagingState.page}</div>
-                        <SpinnerButton
-                            loading={usersLoading.loading}
-                            loadingText="Loading..."
-                            staticText="Prev Page"
-                            buttonProps={{
-                                type: 'button',
-                                disabled:
-                                    usersLoading.loading ||
-                                    pagingState.page <= 1,
-                                variant: 'primary',
-                                onClick: () =>
-                                    handleGetUserData(
-                                        'prev',
-                                        pagingState.first ||
-                                            pagingState.prevRef,
-                                    ),
-                            }}
-                        />
+                                    pagingState.page === 0
+                                }
+                                variant="primary"
+                                onClick={() =>
+                                    handleGetUserData('next', pagingState.last)
+                                }
+                            >
+                                Next Page
+                            </Button>
+                        </ButtonGroup>
+                        {usersLoading.loading ? (
+                            <PageSpinner />
+                        ) : (
+                            showUsers && (
+                                <div>
+                                    <Table
+                                        striped
+                                        bordered
+                                        hover
+                                        variant="dark"
+                                        responsive
+                                    >
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Email</th>
+                                                <th>Name</th>
+                                                <th>Allow</th>
+                                                <th>Admin</th>
+                                                <th>Photo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {users.map(
+                                                ({
+                                                    id,
+                                                    email,
+                                                    allow,
+                                                    admin,
+                                                    displayName,
+                                                    photoURL,
+                                                }) => {
+                                                    const allowed =
+                                                        allow === true;
+                                                    const allowText = allowed
+                                                        ? 'Remove'
+                                                        : 'Add';
+                                                    const adminUser =
+                                                        admin === true;
+                                                    const adminText = adminUser
+                                                        ? 'Remove'
+                                                        : 'Add';
+                                                    return (
+                                                        <tr
+                                                            className={
+                                                                id === user!.uid
+                                                                    ? 'text-warning'
+                                                                    : undefined
+                                                            }
+                                                        >
+                                                            <td>{id}</td>
+                                                            <td>{email}</td>
+                                                            <td>
+                                                                {displayName}
+                                                            </td>
+                                                            <td>
+                                                                <Button
+                                                                    onClick={() =>
+                                                                        updateDetail(
+                                                                            id,
+                                                                            {
+                                                                                key:
+                                                                                    'allow',
+                                                                                value: !allowed,
+                                                                            },
+                                                                        )
+                                                                    }
+                                                                    variant="primary"
+                                                                >
+                                                                    {allowText}
+                                                                </Button>
+                                                            </td>
+                                                            <td>
+                                                                <Button
+                                                                    onClick={() =>
+                                                                        updateDetail(
+                                                                            id,
+                                                                            {
+                                                                                key:
+                                                                                    'admin',
+                                                                                value: !adminUser,
+                                                                            },
+                                                                        )
+                                                                    }
+                                                                    variant="primary"
+                                                                >
+                                                                    {adminText}
+                                                                </Button>
+                                                            </td>
+                                                            <td>
+                                                                {photoURL
+                                                                    ? 'Yes'
+                                                                    : 'No'}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                },
+                                            )}
+                                        </tbody>
+                                    </Table>
+                                </div>
+                            )
+                        )}
                     </>
                 ) : (
                     <h1 className="display-5 text-center">

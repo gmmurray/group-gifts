@@ -37,16 +37,6 @@ export const getPaginatedUserDetails = async (
 ): Promise<Array<UserDetail> | void> => {
     const retrievedUsers = new Array<UserDetail>();
 
-    // get first page
-    // if (reference === null) {
-    //     const snapshot = await userDetailContext
-    //         .withConverter(userDetailConverter)
-    //         .orderBy(orderBy)
-    //         .limit(page)
-    //         .get();
-    //     snapshot.forEach(u => retrievedUsers.push(new UserDetail(u.data())));
-    // } else {
-    //     if (dir === 'next') {
     userDetailContext
         .withConverter(userDetailConverter)
         .orderBy(orderBy)
@@ -59,9 +49,6 @@ export const getPaginatedUserDetails = async (
                 );
                 callback(retrievedUsers);
             } else {
-                // let query = userDetailContext
-                //     .withConverter(userDetailConverter)
-                //     .orderBy(orderBy);
                 if (dir === 'next') {
                     userDetailContext
                         .withConverter(userDetailConverter)
@@ -89,49 +76,8 @@ export const getPaginatedUserDetails = async (
                             callback(retrievedUsers);
                         });
                 }
-                // query
-                //     .limit(page)
-                //     .get()
-                //     .then(nextPage => {
-                //         nextPage.forEach(u =>
-                //             retrievedUsers.push(new UserDetail(u.data())),
-                //         );
-                //     });
             }
         });
-    // let last = userDetailContext.doc(reference);
-    // userDetailContext
-    //     .orderBy(orderBy)
-    //     .startAfter(last)
-    //     .limit(page)
-    //     .withConverter(userDetailConverter)
-    //     .get()
-    //     .then(snapshot => {
-    //         snapshot.forEach(u =>
-    //             retrievedUsers.push(new UserDetail(u.data())),
-    //         );
-    //     });
-    // callback(retrievedUsers);
-    //     } else {
-    //         userDetailContext
-    //             .doc(reference)
-    //             .get()
-    //             .then(async doc => {
-    //                 const snapshot = await userDetailContext
-    //                     .orderBy(orderBy)
-    //                     .endBefore(doc)
-    //                     .limit(page)
-    //                     .withConverter(userDetailConverter)
-    //                     .get();
-
-    //                 snapshot.forEach(u =>
-    //                     retrievedUsers.push(new UserDetail(u.data())),
-    //                 );
-    //             });
-    //     }
-    // }
-
-    //return retrievedUsers;
 };
 
 export const getUserDetailItemsFromList = async (
@@ -163,6 +109,15 @@ export const updateUserDetail = async (
         ...shapedUpdate,
     });
 };
+
+export const updateSingleUserDetail = async (
+    userId: string,
+    update: { key: keyof UserDetail, value: any }
+): Promise<void> => {
+    await userDetailContext.doc(userId).update({
+        [update.key]: update.value
+    });
+}
 
 export const userDetailConverter = {
     toFirestore: (userDetail: IUserDetail): firestore.DocumentData => {

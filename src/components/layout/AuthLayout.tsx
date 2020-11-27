@@ -54,6 +54,11 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                             <Nav.Link as={NavLink} to="/groups" exact>
                                 My groups
                             </Nav.Link>
+                            {userPermission.admin && (
+                                <Nav.Link as={NavLink} to="/admin" exact>
+                                    Admin
+                                </Nav.Link>
+                            )}
                         </Nav>
                         {user && (
                             <span className="text-white mr-1">
@@ -64,11 +69,6 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                             <Nav.Link onClick={() => setProfileModalOpen(true)}>
                                 Update Profile
                             </Nav.Link>
-                            {userPermission.admin && (
-                                <Nav.Link onClick={() => push('/admin')}>
-                                    Admin
-                                </Nav.Link>
-                            )}
                             <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
                         </Nav>
                     </Navbar.Collapse>
