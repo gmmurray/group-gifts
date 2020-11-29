@@ -336,7 +336,10 @@ const Group: FunctionComponent<IGroupsProps> = ({
         async (giftId: string, status: GiftStatus): Promise<void> => {
             if (user !== null) {
                 try {
-                    await updateGiftStatus(groupId, giftId, status, user.uid);
+                    let statusText: string;
+                    if (status === GiftStatus.Available) statusText = '';
+                    else statusText = user.uid;
+                    await updateGiftStatus(groupId, giftId, status, statusText);
                     const gifts = userGroup.gifts.map(
                         (g: Gift): Gift =>
                             g.id === giftId ? { ...g, status } : { ...g },
