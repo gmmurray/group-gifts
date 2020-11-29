@@ -1,9 +1,10 @@
 import React, { createContext, ReactNode, useContext } from 'react';
 import { updateUserDetail } from '../database/repositories/userDetailRepository';
 import {
-    getUserPermissionType,
+    currentUserDetailsType,
+    getCurrentUserDetailsType,
+    refreshCurrentUserDetailsType,
     useFirebase,
-    userPermissionType,
 } from './firebase';
 
 type doLoginType = (email: string, password: string) => Promise<void>;
@@ -21,8 +22,9 @@ type doProfileUpdateType = (updates: updateType) => Promise<void>;
 type AuthenticationContextState = {
     isLogged: boolean;
     isFetchingUser: boolean;
-    userPermission: userPermissionType;
-    getUserPermission: getUserPermissionType;
+    currentUserDetails: currentUserDetailsType;
+    getCurrentUserDetails: getCurrentUserDetailsType;
+    refreshCurrentUserDetails: refreshCurrentUserDetailsType;
     user: firebase.User | null;
     doLogin: doLoginType;
     doRegister: doRegisterType;
@@ -47,10 +49,11 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
         logoutUserFromFirebase,
         createThroughGoogle,
         loginThroughGoogle,
-        userPermission,
-        getUserPermission,
+        currentUserDetails,
+        getCurrentUserDetails,
         user,
         isFetchingUser,
+        refreshCurrentUserDetails,
     } = useFirebase();
     const getLoggedUser = () => user;
 
@@ -125,8 +128,9 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
                 doGoogleRegister,
                 doLogout,
                 doProfileUpdate,
-                userPermission,
-                getUserPermission,
+                currentUserDetails,
+                getCurrentUserDetails,
+                refreshCurrentUserDetails,
             }}
         >
             {children}

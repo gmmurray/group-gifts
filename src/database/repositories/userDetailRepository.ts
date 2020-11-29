@@ -139,6 +139,7 @@ export const userDetailConverter = {
             admin: data.admin,
             displayName: data.displayName,
             photoURL: data.photoURL,
+            favoriteGroup: data.favoriteGroup,
         });
     },
 };

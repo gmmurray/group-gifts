@@ -35,7 +35,7 @@ type AdminType = {};
 
 const Admin: FunctionComponent<AdminType> = () => {
     //#region context
-    const { user, getUserPermission } = useAuthentication();
+    const { user, getCurrentUserDetails } = useAuthentication();
     const { push } = useHistory();
     //#endregion
 
@@ -57,7 +57,7 @@ const Admin: FunctionComponent<AdminType> = () => {
         const getPermissionData = async () => {
             if (user !== null) {
                 try {
-                    const result = await getUserPermission(user.uid);
+                    const result = await getCurrentUserDetails(user.uid);
                     if (result !== null) {
                         setUserPermission(state => ({ ...state, ...result }));
                         setUserPermissionLoaded(state => ({

@@ -5,6 +5,7 @@ export class UserDetail {
     public admin: boolean;
     public displayName: string;
     public photoURL: string;
+    public favoriteGroup: string;
 
     constructor(props: IUserDetail | undefined) {
         if (props === undefined) {
@@ -14,6 +15,7 @@ export class UserDetail {
             this.admin = false;
             this.displayName = '';
             this.photoURL = '';
+            this.favoriteGroup = '';
         } else {
             this.id = props.id;
             this.email = props.email;
@@ -21,6 +23,7 @@ export class UserDetail {
             this.admin = props.admin;
             this.displayName = props.displayName;
             this.photoURL = props.photoURL;
+            this.favoriteGroup = props.favoriteGroup;
         }
     }
 }
@@ -32,4 +35,5 @@ export interface IUserDetail {
     admin: boolean;
     displayName: string;
     photoURL: string;
+    favoriteGroup: string;
 }

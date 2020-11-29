@@ -8,8 +8,12 @@ import { Link } from 'react-router-dom';
 
 import GroupGiftLogo from '../../assets/images/group-gift-logo.png';
 import './styles.scss';
+import { useAuthentication } from '../../context/authentication';
 
 export const Home = () => {
+    //#region context
+    const { currentUserDetails } = useAuthentication();
+    //#endregion
     //#region render
     return (
         <>
@@ -88,6 +92,18 @@ export const Home = () => {
                             >
                                 View now
                             </Button>
+                            {currentUserDetails &&
+                                currentUserDetails.favoriteGroup &&
+                                currentUserDetails.favoriteGroup !== '' && (
+                                    <Button
+                                        variant="success"
+                                        as={Link}
+                                        to={`/groups/${currentUserDetails.favoriteGroup}`}
+                                        className="ml-2"
+                                    >
+                                        View favorited
+                                    </Button>
+                                )}
                         </Container>
                     </Col>
                 </Row>
