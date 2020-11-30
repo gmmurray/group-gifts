@@ -4,7 +4,7 @@ import React, {
     useEffect,
     useState,
 } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Table from 'react-bootstrap/Table';
 
 import BasicPage from '../../components/BasicPage';
@@ -36,7 +36,6 @@ type AdminType = {};
 const Admin: FunctionComponent<AdminType> = () => {
     //#region context
     const { user, getCurrentUserDetails } = useAuthentication();
-    const { push } = useHistory();
     //#endregion
 
     //#region state
@@ -76,6 +75,7 @@ const Admin: FunctionComponent<AdminType> = () => {
             }
         };
         getPermissionData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     //#endregion
 
@@ -170,7 +170,7 @@ const Admin: FunctionComponent<AdminType> = () => {
                 }));
             }
         },
-        [],
+        [handleGetUserData],
     );
     //#endregion
     const alertText = userPermissionLoaded.error || usersLoading.error;

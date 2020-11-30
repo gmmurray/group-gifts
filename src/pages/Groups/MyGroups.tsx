@@ -139,7 +139,7 @@ const MyGroups: FunctionComponent<IMyGroups> = () => {
                 }));
             }
         },
-        [setFavoriteLoading],
+        [refreshCurrentUserDetails, refreshGroups, user],
     );
     //#endregion
 
