@@ -35,17 +35,37 @@ type doUserLoginOnFirebaseType = (
 type loginThroughGoogleType = () => Promise<void>;
 type createThroughGoogleType = () => Promise<void>;
 type logoutUserFromFirebaseType = () => Promise<void>;
-type getUserAccessType = (userId: string) => Promise<boolean>;
-
+export type currentUserDetailsType = {
+    email: string;
+    allow: boolean;
+    admin: boolean;
+    displayName: string;
+    photoURL: string;
+    favoriteGroup: string;
+};
+const defaultUserDetails: currentUserDetailsType = {
+    email: '',
+    allow: false,
+    admin: false,
+    displayName: '',
+    photoURL: '',
+    favoriteGroup: '',
+};
+export type getCurrentUserDetailsType = (
+    userId: string,
+) => Promise<currentUserDetailsType>;
+export type refreshCurrentUserDetailsType = () => Promise<void>;
 type FirebaseState = {
     user: firebase.User | null;
     isFetchingUser: boolean;
-    hasAccess: boolean;
     createUserOnFirebase: createUserOnFirebaseType;
     doUserLoginOnFirebase: doUserLoginOnFirebaseType;
     loginThroughGoogle: loginThroughGoogleType;
     createThroughGoogle: createThroughGoogleType;
     logoutUserFromFirebase: logoutUserFromFirebaseType;
+    currentUserDetails: currentUserDetailsType;
+    getCurrentUserDetails: getCurrentUserDetailsType;
+    refreshCurrentUserDetails: refreshCurrentUserDetailsType;
 };
 
 const FirebaseContext = createContext<FirebaseState | undefined>(undefined);
@@ -57,24 +77,50 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
     // AUTHENTICATION
     const [user, setUser] = useState<firebase.User | null>(null);
     const [isFetchingUser, setIsFetchingUser] = useState(true);
-    const [hasAccess, setHasAccess] = useState(false);
+    const [currentUserDetails, setCurrentUserDetails] = useState(
+        defaultUserDetails,
+    );
     const [isFetchingAccess, setIsFetchingAccess] = useState(true);
 
-    auth.onAuthStateChanged(async user => {
-        if (user) {
-            setUser(user);
-            const allow = await getUserAccess(user.uid);
-            setHasAccess(allow);
-            setIsFetchingAccess(false);
-        } else {
-            setUser(null);
-            setIsFetchingAccess(false);
-        }
-    });
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async user => {
+            if (user) {
+                setUser(user);
+                const currentUserDetails = await getCurrentUserDetails(
+                    user.uid,
+                );
+                setCurrentUserDetails(currentUserDetails);
+                setIsFetchingAccess(false);
+            } else {
+                setUser(null);
+                setIsFetchingAccess(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         if (!isFetchingAccess) setIsFetchingUser(false);
     }, [isFetchingAccess]);
+
+    const refreshCurrentUserDetails: refreshCurrentUserDetailsType = () =>
+        new Promise(async (resolve, reject) => {
+            if (user !== null) {
+                try {
+                    const currentUserDetails = await getCurrentUserDetails(
+                        user.uid,
+                    );
+                    setCurrentUserDetails(currentUserDetails);
+                    resolve();
+                } catch (error) {
+                    console.log(error);
+                    reject(error);
+                }
+            } else {
+                resolve();
+            }
+        });
 
     const createUserOnFirebase: createUserOnFirebaseType = (email, password) =>
         new Promise(async (resolve, reject) => {
@@ -173,7 +219,7 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
             }
         });
 
-    const getUserAccess: getUserAccessType = userId =>
+    const getCurrentUserDetails: getCurrentUserDetailsType = userId =>
         new Promise(async (resolve, reject) => {
             try {
                 const userDoc = await usersCollection.doc(userId).get();
@@ -184,13 +230,22 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                 }
 
                 const data = userDoc.data();
-                resolve(
-                    data &&
-                        (data?.allow ?? false) &&
-                        data.allow !== undefined &&
-                        data.allow,
-                );
-                return;
+                if (data) {
+                    resolve({
+                        email: data?.email ?? '',
+                        allow:
+                            (data?.allow ?? false) &&
+                            data.allow !== undefined &&
+                            data.allow,
+                        admin:
+                            (data?.admin ?? false) &&
+                            data.admin !== undefined &&
+                            data.admin,
+                        displayName: data?.displayName ?? '',
+                        photoURL: data?.photoURL ?? '',
+                        favoriteGroup: data?.favoriteGroup ?? '',
+                    });
+                } else resolve({ ...defaultUserDetails });
             } catch (error) {
                 reject(error);
             }
@@ -209,7 +264,9 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                 createThroughGoogle,
                 user,
                 isFetchingUser,
-                hasAccess,
+                currentUserDetails,
+                getCurrentUserDetails,
+                refreshCurrentUserDetails,
             }}
         >
             {children}

@@ -19,6 +19,7 @@ import {
 import {
     isValidURL,
     validateRequiredField,
+    validateEmptyStringField,
 } from '../../helpers/fieldValidation';
 import { GiftUpateOrCreate } from '../../models/gift';
 import {
@@ -173,7 +174,7 @@ const CreateUpdateGiftModal: FunctionComponent<CreateUpdateGiftModalType> = ({
             ? null
             : 'Please enter a gift name';
         const webUrl =
-            validateRequiredField(giftForm.values.webUrl) &&
+            validateEmptyStringField(giftForm.values.webUrl) ||
             isValidURL(giftForm.values.webUrl)
                 ? null
                 : 'Please enter a valid URL';

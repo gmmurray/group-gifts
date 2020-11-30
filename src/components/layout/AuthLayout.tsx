@@ -16,7 +16,7 @@ interface IAuthLayoutProps {}
 
 const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
     const { push } = useHistory();
-    const { user, doLogout } = useAuthentication();
+    const { user, doLogout, currentUserDetails } = useAuthentication();
     const { windowDimensions } = useWindowDimensions();
     const { bodyHeight, documentHeight } = windowDimensions;
     const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -54,9 +54,14 @@ const AuthLayout: FunctionComponent<IAuthLayoutProps> = ({ children }) => {
                             <Nav.Link as={NavLink} to="/groups" exact>
                                 My groups
                             </Nav.Link>
+                            {currentUserDetails.admin && (
+                                <Nav.Link as={NavLink} to="/admin" exact>
+                                    Admin
+                                </Nav.Link>
+                            )}
                         </Nav>
                         {user && (
-                            <span className="text-white">
+                            <span className="text-white mr-1">
                                 Hi {user.displayName || user.email}!
                             </span>
                         )}

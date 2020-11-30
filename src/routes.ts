@@ -1,3 +1,4 @@
+import Admin from './pages/Admin';
 import Gifts from './pages/Gifts';
 import Group from './pages/Groups';
 import CreateGroup from './pages/Groups/CreateGroup';
@@ -35,5 +36,10 @@ export const authorizedRoutes = [
         path: '/groups/:groupId/gifts/',
         exact: true,
         component: Gifts,
+    },
+    {
+        path: '/admin',
+        exact: true,
+        component: Admin,
     },
 ];

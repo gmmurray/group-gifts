@@ -1,5 +1,6 @@
 import { firestore } from 'firebase';
 import { IUserDetail, UserDetail } from '../../models/userDetail';
+import { pageDirectionType } from '../../shared/defaultTypes';
 import { fireDb } from '../db';
 
 export const userDetailContext = fireDb.collection('users');
@@ -25,6 +26,58 @@ export const getUserDetailItems = async (
     });
 
     return retrievedUserDetails;
+};
+
+export const getPaginatedUserDetails = async (
+    dir: pageDirectionType,
+    orderBy: string,
+    page: number,
+    reference: string | null,
+    callback: Function,
+): Promise<Array<UserDetail> | void> => {
+    const retrievedUsers = new Array<UserDetail>();
+
+    userDetailContext
+        .withConverter(userDetailConverter)
+        .orderBy(orderBy)
+        .limit(page)
+        .get()
+        .then((snapshot: firestore.QuerySnapshot<UserDetail>) => {
+            if (dir === null && reference === null) {
+                snapshot.forEach(u =>
+                    retrievedUsers.push(new UserDetail(u.data())),
+                );
+                callback(retrievedUsers);
+            } else {
+                if (dir === 'next') {
+                    userDetailContext
+                        .withConverter(userDetailConverter)
+                        .orderBy(orderBy)
+                        .startAfter(reference)
+                        .limit(page)
+                        .get()
+                        .then(nextPage => {
+                            nextPage.forEach(u =>
+                                retrievedUsers.push(new UserDetail(u.data())),
+                            );
+                            callback(retrievedUsers);
+                        });
+                } else if (dir === 'prev') {
+                    userDetailContext
+                        .withConverter(userDetailConverter)
+                        .orderBy(orderBy)
+                        .endBefore(reference)
+                        .limit(page)
+                        .get()
+                        .then(nextPage => {
+                            nextPage.forEach(u =>
+                                retrievedUsers.push(new UserDetail(u.data())),
+                            );
+                            callback(retrievedUsers);
+                        });
+                }
+            }
+        });
 };
 
 export const getUserDetailItemsFromList = async (
@@ -57,6 +110,15 @@ export const updateUserDetail = async (
     });
 };
 
+export const updateSingleUserDetail = async (
+    userId: string,
+    update: { key: keyof UserDetail, value: any }
+): Promise<void> => {
+    await userDetailContext.doc(userId).update({
+        [update.key]: update.value
+    });
+}
+
 export const userDetailConverter = {
     toFirestore: (userDetail: IUserDetail): firestore.DocumentData => {
         return {
@@ -74,8 +136,10 @@ export const userDetailConverter = {
             id: udSnapshot.id,
             email: data.email,
             allow: data.allow,
+            admin: data.admin,
             displayName: data.displayName,
             photoURL: data.photoURL,
+            favoriteGroup: data.favoriteGroup,
         });
     },
 };

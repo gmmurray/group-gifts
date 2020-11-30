@@ -23,6 +23,7 @@ import { sortByProperty } from '../../helpers/sort';
 import { useWindowDimensions } from '../../context/windowDimensions';
 import SpinnerButton from '../../components/SpinnerButton';
 import BasicPage from '../../components/BasicPage';
+import { updateSingleUserDetail } from '../../database/repositories/userDetailRepository';
 
 //#region interfaces
 interface IMyGroups {}
@@ -30,7 +31,11 @@ interface IMyGroups {}
 
 const MyGroups: FunctionComponent<IMyGroups> = () => {
     //#region context
-    const { user } = useAuthentication();
+    const {
+        user,
+        currentUserDetails,
+        refreshCurrentUserDetails,
+    } = useAuthentication();
     const { push } = useHistory();
     const { recalcDimensions } = useWindowDimensions();
     //#endregion
@@ -40,6 +45,10 @@ const MyGroups: FunctionComponent<IMyGroups> = () => {
     const [groupsLoaded, setGroupsLoaded] = useState(false);
     const [leaveLoading, setLeaveLoading] = useState(false);
     const [leaveError, setLeaveError] = useState(false);
+    const [favoriteLoading, setFavoriteLoading] = useState({
+        loading: false,
+        id: '',
+    });
     //#endregion
 
     //#region side effects
@@ -69,6 +78,7 @@ const MyGroups: FunctionComponent<IMyGroups> = () => {
     const refreshGroups = useCallback(async (): Promise<void> => {
         if (user !== null) {
             try {
+                setGroupsLoaded(false);
                 const result = await getUserGroups(user?.uid);
                 if (result !== null) {
                     setAvailableGroups(result);
@@ -102,6 +112,34 @@ const MyGroups: FunctionComponent<IMyGroups> = () => {
             }
         },
         [refreshGroups, user],
+    );
+
+    const favoriteGroup = useCallback(
+        async (groupId: string): Promise<void> => {
+            if (user !== null) {
+                setFavoriteLoading(state => ({
+                    ...state,
+                    loading: true,
+                    id: groupId,
+                }));
+                try {
+                    await updateSingleUserDetail(user.uid, {
+                        key: 'favoriteGroup',
+                        value: groupId,
+                    });
+                    await refreshCurrentUserDetails();
+                    refreshGroups();
+                } catch (error) {
+                    console.log(error);
+                }
+                setFavoriteLoading(state => ({
+                    ...state,
+                    loading: false,
+                    id: '',
+                }));
+            }
+        },
+        [setFavoriteLoading],
     );
     //#endregion
 
@@ -139,6 +177,8 @@ const MyGroups: FunctionComponent<IMyGroups> = () => {
                                 ownerId,
                             }: Group): JSX.Element => {
                                 const participantCount = participants?.length;
+                                const groupIsFavorited =
+                                    id === currentUserDetails.favoriteGroup;
                                 return (
                                     <Col key={id} className="mb-4">
                                         <Card key={id} className="text-center">
@@ -192,6 +232,32 @@ const MyGroups: FunctionComponent<IMyGroups> = () => {
                                                         }}
                                                     />
                                                 )}
+                                                <SpinnerButton
+                                                    loading={
+                                                        favoriteLoading.loading &&
+                                                        favoriteLoading.id ===
+                                                            id
+                                                    }
+                                                    staticText={
+                                                        groupIsFavorited
+                                                            ? 'Unfavorite'
+                                                            : 'Favorite'
+                                                    }
+                                                    loadingText="Saving..."
+                                                    buttonProps={{
+                                                        type: 'button',
+                                                        disabled:
+                                                            favoriteLoading.loading,
+                                                        onClick: () =>
+                                                            favoriteGroup(
+                                                                groupIsFavorited
+                                                                    ? ''
+                                                                    : id,
+                                                            ),
+                                                        variant: 'success',
+                                                        className: 'mr-2',
+                                                    }}
+                                                />
                                                 <Button
                                                     onClick={() =>
                                                         handleViewGroup(id)

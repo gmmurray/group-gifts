@@ -10,10 +10,19 @@ import AuthLayout from './components/layout/AuthLayout';
 import PageSpinner from './components/PageSpinner';
 
 export const App = () => {
-    const { isFetchingUser, isLogged, hasAccess } = useAuthentication();
+    const {
+        isFetchingUser,
+        isLogged,
+        currentUserDetails,
+    } = useAuthentication();
     if (isFetchingUser) return <PageSpinner />;
     else if (!isLogged) return <UnauthenticatedApp />;
-    else return hasAccess ? <AuthenticatedApp /> : <Unauthorized />;
+    else
+        return currentUserDetails && currentUserDetails.allow ? (
+            <AuthenticatedApp />
+        ) : (
+            <Unauthorized />
+        );
 };
 
 const AuthenticatedApp = () => {
@@ -62,6 +71,9 @@ const UnauthenticatedApp = () => {
             </Route>
             <Route exact path="/register">
                 <Register />
+            </Route>
+            <Route path="/">
+                <Redirect to="/login" />
             </Route>
         </Switch>
     );
