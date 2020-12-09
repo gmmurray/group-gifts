@@ -1,7 +1,8 @@
 {
-    "name": "react-firebase-auth-boilerplate",
-    "version": "0.1.0",
-    "private": true,
+    "name": "group-gifts",
+    "version": "1.0.0",
+    "private": false,
+    "homepage": "/build",
     "dependencies": {
         "@testing-library/jest-dom": "^4.2.4",
         "@testing-library/react": "^9.3.2",
@@ -27,12 +28,11 @@
     },
     "scripts": {
         "start": "react-scripts start",
-        "prebuild": "yarn",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
-        "predeploy": "yarn build",
-        "deploy": "firebase build"
+        "predeploy": "yarn",
+        "deploy": "yarn build"
     },
     "eslintConfig": {
         "extends": "react-app"
