@@ -2,7 +2,6 @@
     "name": "group-gifts",
     "version": "1.0.0",
     "private": false,
-    "homepage": "/build",
     "dependencies": {
         "@testing-library/jest-dom": "^4.2.4",
         "@testing-library/react": "^9.3.2",
@@ -31,8 +30,8 @@
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
-        "predeploy": "yarn",
-        "deploy": "yarn build"
+        "predeploy": "yarn && yarn build",
+        "deploy": "npx firebase deploy"
     },
     "eslintConfig": {
         "extends": "react-app"
