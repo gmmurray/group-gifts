@@ -358,7 +358,7 @@ const Group: FunctionComponent<IGroupsProps> = ({
 
     const handleViewUserGifts = useCallback(
         (id: string): void => {
-            if (giftOptions.user === id) {
+            if (giftOptions.user === id || id === '') {
                 setGiftOptions(state => ({ ...state, user: null }));
             } else {
                 setGiftOptions(state => ({ ...state, user: id }));
@@ -415,6 +415,10 @@ const Group: FunctionComponent<IGroupsProps> = ({
         groupParticipants.every(u => u.displayName !== undefined)
             ? 'displayName'
             : 'email',
+    );
+
+    const memberFilterOptions = sortedParticipants.filter(
+        ({ id }: Partial<UserDetail>) => user!.uid !== id,
     );
     return (
         <BasicPage
@@ -562,25 +566,37 @@ const Group: FunctionComponent<IGroupsProps> = ({
                             Purchased
                         </Dropdown.Item>
                     </DropdownButton>
-                    <DropdownButton
-                        variant="primary"
-                        title="Member"
-                        id="member-dropdown"
-                        as={ButtonGroup}
-                    >
-                        {sortedParticipants.map(
-                            ({ id, displayName }: Partial<UserDetail>) => (
-                                <Dropdown.Item
-                                    key={id!}
-                                    active={giftOptions.user === id!}
-                                    eventKey={id!}
-                                    onSelect={() => handleViewUserGifts(id!)}
-                                >
-                                    {displayName}
-                                </Dropdown.Item>
-                            ),
-                        )}
-                    </DropdownButton>
+                    {memberFilterOptions.length > 0 && (
+                        <DropdownButton
+                            variant="primary"
+                            title="Member"
+                            id="member-dropdown"
+                            as={ButtonGroup}
+                        >
+                            <Dropdown.Item
+                                key={0}
+                                active={giftOptions.user === null}
+                                eventKey={''}
+                                onSelect={() => handleViewUserGifts('')}
+                            >
+                                All
+                            </Dropdown.Item>
+                            {memberFilterOptions.map(
+                                ({ id, displayName }: Partial<UserDetail>) => (
+                                    <Dropdown.Item
+                                        key={id!}
+                                        active={giftOptions.user === id!}
+                                        eventKey={id!}
+                                        onSelect={() =>
+                                            handleViewUserGifts(id!)
+                                        }
+                                    >
+                                        {displayName}
+                                    </Dropdown.Item>
+                                ),
+                            )}
+                        </DropdownButton>
+                    )}
                     <Button onClick={refreshGroup} className="primary">
                         <BsArrowRepeat />
                     </Button>
