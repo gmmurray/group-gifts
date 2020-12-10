@@ -31,7 +31,7 @@
         "test": "react-scripts test",
         "eject": "react-scripts eject",
         "predeploy": "yarn",
-        "deploy": "yarn build"
+        "deploy": "yarn build && firebase deploy"
     },
     "eslintConfig": {
         "extends": "react-app"
