@@ -410,6 +410,12 @@ const Group: FunctionComponent<IGroupsProps> = ({
         participantNames[id] = displayName || email;
     });
 
+    const sortedParticipants = sortByProperty(
+        groupParticipants,
+        groupParticipants.every(u => u.displayName !== undefined)
+            ? 'displayName'
+            : 'email',
+    );
     return (
         <BasicPage
             showAlert={!!alertText}
@@ -424,20 +430,13 @@ const Group: FunctionComponent<IGroupsProps> = ({
                 {groupParticipants && groupParticipants.length > 0 ? (
                     <Container>
                         <Row xs={1} lg={3}>
-                            {sortByProperty(
-                                groupParticipants,
-                                groupParticipants.every(
-                                    u => u.displayName !== undefined,
-                                )
-                                    ? 'displayName'
-                                    : 'email',
-                            ).map(
+                            {sortedParticipants.map(
                                 ({
                                     id,
                                     email,
                                     displayName,
                                     photoURL,
-                                }): React.ReactNode => (
+                                }: UserDetail): React.ReactNode => (
                                     <Col key={id} className="w-25">
                                         <Card className="text-center">
                                             <Card.Img
@@ -531,7 +530,7 @@ const Group: FunctionComponent<IGroupsProps> = ({
                     <DropdownButton
                         variant="primary"
                         title="Status"
-                        id="sort-dropdown"
+                        id="status-dropdown"
                         as={ButtonGroup}
                     >
                         <Dropdown.Item
@@ -562,6 +561,25 @@ const Group: FunctionComponent<IGroupsProps> = ({
                         >
                             Purchased
                         </Dropdown.Item>
+                    </DropdownButton>
+                    <DropdownButton
+                        variant="primary"
+                        title="Member"
+                        id="member-dropdown"
+                        as={ButtonGroup}
+                    >
+                        {sortedParticipants.map(
+                            ({ id, displayName }: Partial<UserDetail>) => (
+                                <Dropdown.Item
+                                    key={id!}
+                                    active={giftOptions.user === id!}
+                                    eventKey={id!}
+                                    onSelect={() => handleViewUserGifts(id!)}
+                                >
+                                    {displayName}
+                                </Dropdown.Item>
+                            ),
+                        )}
                     </DropdownButton>
                     <Button onClick={refreshGroup} className="primary">
                         <BsArrowRepeat />
