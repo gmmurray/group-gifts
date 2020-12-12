@@ -56,6 +56,7 @@ type defaultGiftOptionsType = {
     filter: string;
     user: string | null;
     status: GiftStatus | null;
+    cart: boolean;
 };
 const DEFAULT_GIFT_OPTIONS: defaultGiftOptionsType = {
     sort: 'name',
@@ -63,8 +64,20 @@ const DEFAULT_GIFT_OPTIONS: defaultGiftOptionsType = {
     filter: '',
     user: null,
     status: null,
+    cart: false,
 };
-
+type giftOptionKeys = keyof defaultGiftOptionsType;
+type defaultGiftOptionVariantsType = {
+    [key in giftOptionKeys]: string;
+};
+const DEFAULT_GIFT_OPTIONS_VARIANTS: defaultGiftOptionVariantsType = {
+    sort: 'primary',
+    dir: 'primary',
+    filter: 'primary',
+    user: 'primary',
+    status: 'primary',
+    cart: 'primary',
+};
 interface IGroupsProps {
     match: {
         params: {
@@ -97,6 +110,9 @@ const Group: FunctionComponent<IGroupsProps> = ({
         new Array<UserDetail>(),
     );
     const [giftOptions, setGiftOptions] = useState(DEFAULT_GIFT_OPTIONS);
+    const [giftOptionVariants, setGiftOptionVariants] = useState(
+        DEFAULT_GIFT_OPTIONS_VARIANTS,
+    );
     //#endregion
 
     //#region side effects
@@ -145,6 +161,30 @@ const Group: FunctionComponent<IGroupsProps> = ({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, groupLoaded, userGroup]);
+
+    useEffect((): void => {
+        const updatedState = { ...DEFAULT_GIFT_OPTIONS_VARIANTS };
+        Object.keys(DEFAULT_GIFT_OPTIONS_VARIANTS).forEach((key: string) => {
+            switch (key) {
+                case 'sort':
+                    updatedState[key] =
+                        giftOptions.sort === DEFAULT_GIFT_OPTIONS.sort &&
+                        giftOptions.dir === DEFAULT_GIFT_OPTIONS.dir
+                            ? DEFAULT_GIFT_OPTIONS_VARIANTS[key]
+                            : `outline-${DEFAULT_GIFT_OPTIONS_VARIANTS[key]}`;
+                    break;
+                case 'cart':
+                case 'status':
+                case 'user':
+                    updatedState[key] =
+                        giftOptions[key] === DEFAULT_GIFT_OPTIONS[key]
+                            ? DEFAULT_GIFT_OPTIONS_VARIANTS[key]
+                            : `outline-${DEFAULT_GIFT_OPTIONS_VARIANTS[key]}`;
+                    break;
+            }
+        });
+        setGiftOptionVariants(state => ({ ...state, ...updatedState }));
+    }, [giftOptions, setGiftOptionVariants]);
     //#endregion
 
     //#region callbacks
@@ -203,17 +243,25 @@ const Group: FunctionComponent<IGroupsProps> = ({
             );
         };
 
+        const resolvedCart = (giftStatusText?: string) => {
+            if (giftOptions.cart && user !== null) {
+                return giftStatusText === user.uid;
+            }
+            return true;
+        };
+
         const gifts = userGroup.gifts.filter(
             g =>
                 searchProps(g, giftOptions.filter) &&
                 resolvedStatus(g.status) &&
-                resolvedUser(g.userId),
+                resolvedUser(g.userId) &&
+                resolvedCart(g.statusText),
         );
 
         return giftOptions.dir === 'asc'
             ? sortByProperty(gifts, giftOptions.sort)
             : sortByPropertyDesc(gifts, giftOptions.sort);
-    }, [userGroup.gifts, giftOptions]);
+    }, [userGroup.gifts, giftOptions, user]);
 
     const clearAlert = useCallback((): void => {
         setGroupLoaded({
@@ -254,6 +302,11 @@ const Group: FunctionComponent<IGroupsProps> = ({
         },
         [setGiftOptions, giftOptions],
     );
+
+    const handleCartToggle = useCallback((): void => {
+        const currentCartState = giftOptions.cart;
+        setGiftOptions(state => ({ ...state, cart: !currentCartState }));
+    }, [giftOptions, setGiftOptions]);
 
     const handleFilterChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -420,6 +473,7 @@ const Group: FunctionComponent<IGroupsProps> = ({
     const memberFilterOptions = sortedParticipants.filter(
         ({ id }: Partial<UserDetail>) => user!.uid !== id,
     );
+
     return (
         <BasicPage
             showAlert={!!alertText}
@@ -492,8 +546,19 @@ const Group: FunctionComponent<IGroupsProps> = ({
                     >
                         My wish list
                     </Button>
+                    <Button
+                        variant={giftOptionVariants.cart}
+                        onClick={handleCartToggle}
+                    >
+                        My cart
+                    </Button>
+                </ButtonGroup>
+                <ButtonGroup
+                    aria-label="My Wish List"
+                    className="mb-2 mr-lg-auto"
+                >
                     <DropdownButton
-                        variant="primary"
+                        variant={giftOptionVariants.sort}
                         title="Sort"
                         id="sort-dropdown"
                         as={ButtonGroup}
@@ -532,7 +597,7 @@ const Group: FunctionComponent<IGroupsProps> = ({
                         </Dropdown.Item>
                     </DropdownButton>
                     <DropdownButton
-                        variant="primary"
+                        variant={giftOptionVariants.status}
                         title="Status"
                         id="status-dropdown"
                         as={ButtonGroup}
@@ -568,7 +633,7 @@ const Group: FunctionComponent<IGroupsProps> = ({
                     </DropdownButton>
                     {memberFilterOptions.length > 0 && (
                         <DropdownButton
-                            variant="primary"
+                            variant={giftOptionVariants.user}
                             title="Member"
                             id="member-dropdown"
                             as={ButtonGroup}
