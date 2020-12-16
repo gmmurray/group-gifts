@@ -19,6 +19,7 @@ type FormInputSetup = {
 interface IPropTypes {
     formTitle: string;
     loadingState: boolean;
+    renderPasswordReset?: JSX.Element;
     formInputs: Array<FormInputSetup>;
     formError: string | null;
     onSubmit: (e: SyntheticEvent) => Promise<void>;
@@ -30,6 +31,7 @@ interface IPropTypes {
 const LoginForm = ({
     formTitle,
     loadingState,
+    renderPasswordReset,
     formInputs,
     formError,
     onSubmit,
@@ -87,6 +89,9 @@ const LoginForm = ({
                     >
                         <img src={googleButton} alt="Sign in with Google" />
                     </Button>
+                    <Card.Text className="text-center">
+                        {renderPasswordReset}
+                    </Card.Text>
                 </Card.Body>
                 <Card.Footer className="text-center">
                     {renderFooter}

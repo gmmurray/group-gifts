@@ -35,6 +35,8 @@ type doUserLoginOnFirebaseType = (
 type loginThroughGoogleType = () => Promise<void>;
 type createThroughGoogleType = () => Promise<void>;
 type logoutUserFromFirebaseType = () => Promise<void>;
+type updateUserPasswordType = (password: string) => Promise<void>;
+type resetUserPasswordType = (email: string) => Promise<void>;
 export type currentUserDetailsType = {
     email: string;
     allow: boolean;
@@ -66,6 +68,8 @@ type FirebaseState = {
     currentUserDetails: currentUserDetailsType;
     getCurrentUserDetails: getCurrentUserDetailsType;
     refreshCurrentUserDetails: refreshCurrentUserDetailsType;
+    updateUserPassword: updateUserPasswordType;
+    resetUserPassword: resetUserPasswordType;
 };
 
 const FirebaseContext = createContext<FirebaseState | undefined>(undefined);
@@ -252,6 +256,31 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
             }
         });
 
+    const updateUserPassword: updateUserPasswordType = (password: string) =>
+        new Promise(async (resolve, reject) => {
+            if (user !== null) {
+                try {
+                    await user.updatePassword(password);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            }
+        });
+
+    const resetUserPassword: resetUserPasswordType = (email: string) =>
+        new Promise(async (resolve, reject) => {
+            try {
+                const actionCodeSettings: firebase.auth.ActionCodeSettings = {
+                    url: window.location.href,
+                };
+                await auth.sendPasswordResetEmail(email, actionCodeSettings);
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
+
     // FIRESTORE
     const usersCollection = firestore.collection('users');
 
@@ -268,6 +297,8 @@ function FirebaseProvider({ children }: TrackingProviderProps) {
                 currentUserDetails,
                 getCurrentUserDetails,
                 refreshCurrentUserDetails,
+                updateUserPassword,
+                resetUserPassword,
             }}
         >
             {children}
