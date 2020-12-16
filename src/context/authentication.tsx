@@ -12,6 +12,8 @@ type doRegisterType = (email: string, password: string) => Promise<void>;
 type doGooglerRegisterType = () => Promise<void>;
 type doGoogleLoginType = () => Promise<void>;
 type doLogoutType = () => Promise<void>;
+type doPasswordUpdateType = (password: string) => Promise<void>;
+type doPasswordResetType = (email: string) => Promise<void>;
 
 type updateType = {
     displayName: string | undefined;
@@ -32,6 +34,8 @@ type AuthenticationContextState = {
     doGoogleRegister: doGooglerRegisterType;
     doLogout: doLogoutType;
     doProfileUpdate: doProfileUpdateType;
+    doPasswordUpdate: doPasswordUpdateType;
+    doPasswordReset: doPasswordResetType;
 };
 
 const AuthenticationContext = createContext<
@@ -54,6 +58,8 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
         user,
         isFetchingUser,
         refreshCurrentUserDetails,
+        updateUserPassword,
+        resetUserPassword,
     } = useFirebase();
     const getLoggedUser = () => user;
 
@@ -116,6 +122,29 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
                 reject(err);
             }
         });
+
+    const doPasswordUpdate: doPasswordUpdateType = (password: string) =>
+        new Promise(async (resolve, reject) => {
+            const user = getLoggedUser();
+            if (user !== null) {
+                try {
+                    await updateUserPassword(password);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            }
+        });
+
+    const doPasswordReset: doPasswordResetType = (email: string) =>
+        new Promise(async (resolve, reject) => {
+            try {
+                await resetUserPassword(email);
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
     return (
         <AuthenticationContext.Provider
             value={{
@@ -131,6 +160,8 @@ const AuthenticationProvider = ({ children }: AuthenticationProviderProps) => {
                 currentUserDetails,
                 getCurrentUserDetails,
                 refreshCurrentUserDetails,
+                doPasswordUpdate,
+                doPasswordReset,
             }}
         >
             {children}
